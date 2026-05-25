@@ -1,36 +1,74 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# DetailingHub MVP
 
-## Getting Started
+Marketplace direktorijum za auto detailing usluge u Srbiji. MVP pokriva javni direktorijum, SEO landing stranice, admin CRUD osnovu, lead formu i claim zahtev.
 
-First, run the development server:
+## Stack
+
+- Next.js App Router + TypeScript
+- Tailwind CSS
+- PostgreSQL
+- Prisma 7 + `@prisma/adapter-pg`
+- Zod validacija
+- Jednostavan admin cookie login
+
+## Lokalno pokretanje
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Public deo radi i bez povezane baze preko demo fallback podataka.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Admin login za lokalni demo:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```txt
+admin@detailinghub.rs
+admin12345
+```
 
-## Learn More
+## PostgreSQL setup
 
-To learn more about Next.js, take a look at the following resources:
+1. Kopirati `.env.example` u `.env`.
+2. Podesiti `DATABASE_URL`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `AUTH_SECRET` i
+   `ANALYTICS_SALT`.
+   Za Supabase koristiti Supavisor Session pooler string na portu `5432`. Direct
+   `db.<project-ref>.supabase.co` string često zahteva IPv6 i može da ne radi iz
+   lokalnog okruženja bez IPv6 podrške.
+3. Po želji podesiti `DIRECT_URL`. Ako nije podešen, Prisma CLI koristi
+   `DATABASE_URL`.
+   `DATABASE_POOL_MAX` može ostati `3` za Supabase pooler u MVP fazi.
+4. Pokrenuti:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm run db:push
+npm run db:seed
+npm run dev
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Korisne komande:
 
-## Deploy on Vercel
+```bash
+npm run lint
+npm run build
+npm run db:studio
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Glavne rute
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `/` početna strana
+- `/studiji` lista i filteri
+- `/studiji/[slug]` profil studija
+- `/usluge/[slug]` SEO stranica za uslugu
+- `/grad/[slug]` SEO stranica za grad
+- `/admin` admin pregled
+- `/admin/analytics` analitika pregleda profila
+- `/admin/studios` admin CRUD za studije
+- `/admin/services` usluge
+- `/admin/cities` gradovi
+- `/admin/inquiries` upiti
+- `/admin/claims` zahtevi za preuzimanje profila
+
+## Legal napomena
+
+Za neoverene profile ne koristiti tuđe slike, logotipe ili kopiran tekst. Unositi samo osnovne javno dostupne podatke ili informacije koje studio sam pošalje, uz jasnu oznaku da profil nije potvrđen.

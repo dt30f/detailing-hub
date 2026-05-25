@@ -1,0 +1,244 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { prisma, isDatabaseConfigured } from "@/lib/prisma";
+import {
+  cityFormSchema,
+  serviceFormSchema,
+  studioFormSchema,
+} from "@/lib/validators";
+import type { ClaimStatus, InquiryStatus } from "@/lib/types";
+import {
+  clearAdminSession,
+  createAdminSession,
+  requireAdmin,
+  verifyAdminCredentials,
+} from "@/lib/auth";
+import { slugify } from "@/lib/slug";
+
+function getBoolean(formData: FormData, key: string) {
+  return formData.get(key) === "on" || formData.get(key) === "true";
+}
+
+function studioPayload(formData: FormData) {
+  return studioFormSchema.parse({
+    name: formData.get("name"),
+    slug: formData.get("slug"),
+    shortDescription: formData.get("shortDescription"),
+    description: formData.get("description"),
+    cityId: formData.get("cityId"),
+    municipality: formData.get("municipality"),
+    address: formData.get("address"),
+    phone: formData.get("phone"),
+    email: formData.get("email"),
+    website: formData.get("website"),
+    instagram: formData.get("instagram"),
+    whatsapp: formData.get("whatsapp"),
+    type: formData.get("type") || "STUDIO",
+    status: formData.get("status") || "UNCLAIMED",
+    sourceNote: formData.get("sourceNote"),
+    isFeatured: getBoolean(formData, "isFeatured"),
+    isPremium: getBoolean(formData, "isPremium"),
+    isActive: getBoolean(formData, "isActive"),
+    serviceIds: formData.getAll("serviceIds").map(String),
+  });
+}
+
+function requireDatabase(redirectTo: string) {
+  if (!isDatabaseConfigured()) {
+    redirect(`${redirectTo}?database=missing`);
+  }
+}
+
+export async function loginAdminAction(formData: FormData) {
+  const email = String(formData.get("email") ?? "");
+  const password = String(formData.get("password") ?? "");
+  const verifiedEmail = await verifyAdminCredentials(email, password);
+
+  if (!verifiedEmail) {
+    redirect("/admin/login?error=1");
+  }
+
+  await createAdminSession(verifiedEmail);
+  redirect("/admin");
+}
+
+export async function logoutAdminAction() {
+  await clearAdminSession();
+  redirect("/admin/login");
+}
+
+export async function createStudioAction(formData: FormData) {
+  await requireAdmin();
+  requireDatabase("/admin/studios");
+
+  const data = studioPayload(formData);
+  const slug = data.slug || slugify(data.name);
+
+  const studio = await prisma.detailingStudio.create({
+    data: {
+      name: data.name,
+      slug,
+      shortDescription: data.shortDescription,
+      description: data.description,
+      cityId: data.cityId,
+      municipality: data.municipality,
+      address: data.address,
+      phone: data.phone,
+      email: data.email,
+      website: data.website,
+      instagram: data.instagram,
+      whatsapp: data.whatsapp,
+      type: data.type,
+      status: data.status,
+      sourceNote:
+        data.sourceNote ||
+        "Profil je napravljen na osnovu javno dostupnih informacija.",
+      isFeatured: data.isFeatured,
+      isPremium: data.isPremium,
+      isActive: data.isActive,
+      services: {
+        create: data.serviceIds.map((serviceId) => ({ serviceId })),
+      },
+    },
+  });
+
+  revalidatePath("/studiji");
+  revalidatePath("/admin/studios");
+  redirect(`/admin/studios/${studio.id}`);
+}
+
+export async function updateStudioAction(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id") ?? "");
+  requireDatabase(`/admin/studios/${id}`);
+
+  const data = studioPayload(formData);
+  const slug = data.slug || slugify(data.name);
+
+  await prisma.$transaction([
+    prisma.studioService.deleteMany({ where: { studioId: id } }),
+    prisma.detailingStudio.update({
+      where: { id },
+      data: {
+        name: data.name,
+        slug,
+        shortDescription: data.shortDescription,
+        description: data.description,
+        cityId: data.cityId,
+        municipality: data.municipality,
+        address: data.address,
+        phone: data.phone,
+        email: data.email,
+        website: data.website,
+        instagram: data.instagram,
+        whatsapp: data.whatsapp,
+        type: data.type,
+        status: data.status,
+        sourceNote: data.sourceNote,
+        isFeatured: data.isFeatured,
+        isPremium: data.isPremium,
+        isActive: data.isActive,
+      },
+    }),
+  ]);
+
+  if (data.serviceIds.length > 0) {
+    await prisma.studioService.createMany({
+      data: data.serviceIds.map((serviceId) => ({ studioId: id, serviceId })),
+      skipDuplicates: true,
+    });
+  }
+
+  revalidatePath("/studiji");
+  revalidatePath(`/admin/studios/${id}`);
+  redirect(`/admin/studios/${id}?saved=1`);
+}
+
+export async function hideStudioAction(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id") ?? "");
+  requireDatabase("/admin/studios");
+
+  await prisma.detailingStudio.update({
+    where: { id },
+    data: { status: "HIDDEN", isActive: false },
+  });
+
+  revalidatePath("/studiji");
+  revalidatePath("/admin/studios");
+  redirect("/admin/studios?hidden=1");
+}
+
+export async function createServiceAction(formData: FormData) {
+  await requireAdmin();
+  requireDatabase("/admin/services");
+
+  const data = serviceFormSchema.parse({
+    name: formData.get("name"),
+    slug: formData.get("slug"),
+    category: formData.get("category"),
+    description: formData.get("description"),
+  });
+
+  await prisma.service.create({
+    data: {
+      name: data.name,
+      slug: data.slug || slugify(data.name),
+      category: data.category,
+      description: data.description,
+    },
+  });
+
+  revalidatePath("/admin/services");
+  revalidatePath("/studiji");
+  redirect("/admin/services?saved=1");
+}
+
+export async function createCityAction(formData: FormData) {
+  await requireAdmin();
+  requireDatabase("/admin/cities");
+
+  const data = cityFormSchema.parse({
+    name: formData.get("name"),
+    slug: formData.get("slug"),
+  });
+
+  await prisma.city.create({
+    data: {
+      name: data.name,
+      slug: data.slug || slugify(data.name),
+    },
+  });
+
+  revalidatePath("/admin/cities");
+  revalidatePath("/studiji");
+  redirect("/admin/cities?saved=1");
+}
+
+export async function updateInquiryStatusAction(formData: FormData) {
+  await requireAdmin();
+  requireDatabase("/admin/inquiries");
+
+  const id = String(formData.get("id") ?? "");
+  const status = String(formData.get("status") ?? "NEW") as InquiryStatus;
+
+  await prisma.inquiry.update({ where: { id }, data: { status } });
+
+  revalidatePath("/admin/inquiries");
+  redirect("/admin/inquiries?saved=1");
+}
+
+export async function updateClaimStatusAction(formData: FormData) {
+  await requireAdmin();
+  requireDatabase("/admin/claims");
+
+  const id = String(formData.get("id") ?? "");
+  const status = String(formData.get("status") ?? "PENDING") as ClaimStatus;
+
+  await prisma.claimRequest.update({ where: { id }, data: { status } });
+
+  revalidatePath("/admin/claims");
+  redirect("/admin/claims?saved=1");
+}

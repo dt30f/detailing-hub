@@ -1,0 +1,271 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  ADMIN
+  OWNER
+}
+
+enum StudioStatus {
+  UNCLAIMED
+  CLAIMED
+  VERIFIED
+  HIDDEN
+}
+
+enum StudioType {
+  STUDIO
+  MOBILE
+  BOTH
+}
+
+enum ImageType {
+  GENERAL
+  BEFORE_AFTER
+  WORKSHOP
+  EXTERIOR
+  PLACEHOLDER
+}
+
+enum InquiryStatus {
+  NEW
+  CONTACTED
+  CLOSED
+  SPAM
+}
+
+enum ClaimStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String?
+  role         UserRole @default(ADMIN)
+
+  ownedStudios DetailingStudio[] @relation("StudioOwner")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model City {
+  id   String @id @default(cuid())
+  name String
+  slug String @unique
+
+  studios DetailingStudio[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model DetailingStudio {
+  id               String  @id @default(cuid())
+  name             String
+  slug             String  @unique
+  shortDescription String?
+  description      String?
+
+  cityId String
+  city   City   @relation(fields: [cityId], references: [id])
+
+  address      String?
+  municipality String?
+  latitude     Float?
+  longitude    Float?
+
+  phone     String?
+  email     String?
+  website   String?
+  instagram String?
+  whatsapp  String?
+
+  workingHours Json?
+  type         StudioType   @default(STUDIO)
+  status       StudioStatus @default(UNCLAIMED)
+
+  sourceNote String?
+  isFeatured Boolean @default(false)
+  isPremium  Boolean @default(false)
+  isActive   Boolean @default(true)
+
+  ownerId String?
+  owner   User?   @relation("StudioOwner", fields: [ownerId], references: [id])
+
+  services      StudioService[]
+  images        StudioImage[]
+  views         StudioView[]
+  inquiries     Inquiry[]
+  claimRequests ClaimRequest[]
+  reviews       Review[]
+  subscriptions Subscription[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([cityId])
+  @@index([status])
+  @@index([isFeatured])
+}
+
+model Service {
+  id          String  @id @default(cuid())
+  name        String
+  slug        String  @unique
+  description String?
+  category    String?
+
+  studios   StudioService[]
+  inquiries Inquiry[]
+  reviews   Review[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model StudioService {
+  id        String @id @default(cuid())
+  studioId  String
+  serviceId String
+
+  priceFrom   Int?
+  priceTo     Int?
+  durationMin Int?
+  description String?
+
+  studio  DetailingStudio @relation(fields: [studioId], references: [id], onDelete: Cascade)
+  service Service         @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@unique([studioId, serviceId])
+  @@index([serviceId])
+}
+
+model StudioImage {
+  id       String    @id @default(cuid())
+  studioId String
+  url      String
+  alt      String?
+  type     ImageType @default(GENERAL)
+
+  studio DetailingStudio @relation(fields: [studioId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+}
+
+model StudioView {
+  id         String  @id @default(cuid())
+  studioId   String
+  viewerHash String?
+  referrer   String?
+  userAgent  String?
+  pathname   String?
+
+  studio DetailingStudio @relation(fields: [studioId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([studioId, createdAt])
+  @@index([createdAt])
+  @@index([viewerHash])
+}
+
+model Inquiry {
+  id      String  @id @default(cuid())
+  name    String
+  email   String?
+  phone   String?
+  message String
+
+  studioId  String
+  serviceId String?
+
+  status InquiryStatus @default(NEW)
+
+  studio  DetailingStudio @relation(fields: [studioId], references: [id], onDelete: Cascade)
+  service Service?        @relation(fields: [serviceId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([studioId])
+  @@index([status])
+}
+
+model ClaimRequest {
+  id        String      @id @default(cuid())
+  studioId  String
+  ownerName String
+  email     String
+  phone     String?
+  message   String?
+  status    ClaimStatus @default(PENDING)
+
+  studio DetailingStudio @relation(fields: [studioId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([studioId])
+  @@index([status])
+}
+
+model Review {
+  id         String  @id @default(cuid())
+  studioId   String
+  serviceId  String?
+  rating     Int
+  authorName String
+  comment    String?
+  isApproved Boolean @default(false)
+
+  studio  DetailingStudio @relation(fields: [studioId], references: [id], onDelete: Cascade)
+  service Service?        @relation(fields: [serviceId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([studioId])
+  @@index([isApproved])
+}
+
+model PricingPlan {
+  id           String @id @default(cuid())
+  name         String
+  slug         String @unique
+  priceMonthly Int
+  features     Json?
+
+  subscriptions Subscription[]
+}
+
+model Subscription {
+  id       String    @id @default(cuid())
+  studioId String
+  planId   String
+  status   String
+  startsAt DateTime
+  endsAt   DateTime?
+
+  studio DetailingStudio @relation(fields: [studioId], references: [id])
+  plan   PricingPlan     @relation(fields: [planId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([studioId])
+  @@index([planId])
+}
