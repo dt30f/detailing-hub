@@ -5,7 +5,12 @@ import { redirect } from "next/navigation";
 import { hash } from "bcryptjs";
 import { prisma, isDatabaseConfigured } from "@/lib/prisma";
 import {
+  adminOwnerIdSchema,
+  adminOwnerPasswordSchema,
+  adminOwnerStudioSchema,
+  adminOwnerUpdateSchema,
   approveClaimSchema,
+  claimIdSchema,
   cityFormSchema,
   serviceFormSchema,
   studioFormSchema,
@@ -51,6 +56,19 @@ function requireDatabase(redirectTo: string) {
   if (!isDatabaseConfigured()) {
     redirect(`${redirectTo}?database=missing`);
   }
+}
+
+async function requireOwnerAccount(ownerId: string) {
+  const owner = await prisma.user.findFirst({
+    where: { id: ownerId, role: "OWNER" },
+    select: { id: true },
+  });
+
+  if (!owner) {
+    redirect("/admin/owners?missing=1");
+  }
+
+  return owner;
 }
 
 export async function loginAdminAction(formData: FormData) {
@@ -272,7 +290,11 @@ export async function approveClaimAndCreateOwnerAction(formData: FormData) {
     redirect("/admin/claims?role=invalid");
   }
 
-  const passwordHash = await hash(data.password, 10);
+  if (!existingUser && (!data.password || data.password.length < 8)) {
+    redirect("/admin/claims?password=missing");
+  }
+
+  const passwordHash = data.password ? await hash(data.password, 10) : null;
 
   await prisma.$transaction(async (tx) => {
     const owner = existingUser
@@ -280,14 +302,14 @@ export async function approveClaimAndCreateOwnerAction(formData: FormData) {
           where: { id: existingUser.id },
           data: {
             name: claim.ownerName,
-            passwordHash,
+            ...(passwordHash ? { passwordHash } : {}),
           },
         })
       : await tx.user.create({
           data: {
             email: normalizedEmail,
             name: claim.ownerName,
-            passwordHash,
+            passwordHash: passwordHash!,
             role: "OWNER",
           },
         });
@@ -311,4 +333,108 @@ export async function approveClaimAndCreateOwnerAction(formData: FormData) {
   revalidatePath(`/admin/studios/${claim.studioId}`);
   revalidatePath(`/studiji/${claim.studio.slug}`);
   redirect("/admin/claims?approved=1");
+}
+
+export async function cancelClaimRequestAction(formData: FormData) {
+  await requireAdmin();
+  requireDatabase("/admin/claims");
+
+  const data = claimIdSchema.parse({
+    claimId: formData.get("claimId"),
+  });
+
+  await prisma.claimRequest.delete({ where: { id: data.claimId } });
+
+  revalidatePath("/admin/claims");
+  redirect("/admin/claims?cancelled=1");
+}
+
+export async function updateOwnerAccountAction(formData: FormData) {
+  await requireAdmin();
+  requireDatabase("/admin/owners");
+
+  const data = adminOwnerUpdateSchema.parse({
+    ownerId: formData.get("ownerId"),
+    name: formData.get("name"),
+    email: formData.get("email"),
+  });
+  await requireOwnerAccount(data.ownerId);
+
+  await prisma.user.update({
+    where: { id: data.ownerId },
+    data: {
+      name: data.name,
+      email: data.email.trim().toLowerCase(),
+    },
+  });
+
+  revalidatePath("/admin/owners");
+  redirect("/admin/owners?updated=1");
+}
+
+export async function resetOwnerPasswordAction(formData: FormData) {
+  await requireAdmin();
+  requireDatabase("/admin/owners");
+
+  const data = adminOwnerPasswordSchema.parse({
+    ownerId: formData.get("ownerId"),
+    password: formData.get("password"),
+  });
+  await requireOwnerAccount(data.ownerId);
+
+  await prisma.user.update({
+    where: { id: data.ownerId },
+    data: { passwordHash: await hash(data.password, 10) },
+  });
+
+  revalidatePath("/admin/owners");
+  redirect("/admin/owners?reset=1");
+}
+
+export async function unlinkOwnerStudioAction(formData: FormData) {
+  await requireAdmin();
+  requireDatabase("/admin/owners");
+
+  const data = adminOwnerStudioSchema.parse({
+    ownerId: formData.get("ownerId"),
+    studioId: formData.get("studioId"),
+  });
+
+  await prisma.detailingStudio.updateMany({
+    where: { id: data.studioId, ownerId: data.ownerId },
+    data: {
+      ownerId: null,
+      status: "UNCLAIMED",
+    },
+  });
+
+  revalidatePath("/admin/owners");
+  revalidatePath("/admin/studios");
+  revalidatePath(`/admin/studios/${data.studioId}`);
+  redirect("/admin/owners?unlinked=1");
+}
+
+export async function deleteOwnerAccountAction(formData: FormData) {
+  await requireAdmin();
+  requireDatabase("/admin/owners");
+
+  const data = adminOwnerIdSchema.parse({
+    ownerId: formData.get("ownerId"),
+  });
+  await requireOwnerAccount(data.ownerId);
+
+  const connectedStudios = await prisma.detailingStudio.count({
+    where: { ownerId: data.ownerId },
+  });
+
+  if (connectedStudios > 0) {
+    redirect("/admin/owners?connected=1");
+  }
+
+  await prisma.user.delete({
+    where: { id: data.ownerId },
+  });
+
+  revalidatePath("/admin/owners");
+  redirect("/admin/owners?deleted=1");
 }

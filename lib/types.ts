@@ -89,5 +89,21 @@ export type PublicClaimRequest = {
   message?: string | null;
   status: ClaimStatus;
   createdAt: Date | string;
-  studio: Pick<PublicStudio, "id" | "name" | "slug">;
+  studio: Pick<PublicStudio, "id" | "name" | "slug"> & {
+    owner?: Pick<PublicOwnerAccount, "id" | "email" | "name"> | null;
+  };
+  ownerUser?: Pick<PublicOwnerAccount, "id" | "email" | "name"> | null;
+};
+
+export type PublicOwnerAccount = {
+  id: string;
+  email: string;
+  name?: string | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+  ownedStudios: Array<
+    Pick<PublicStudio, "id" | "name" | "slug" | "status"> & {
+      city: PublicCity;
+    }
+  >;
 };

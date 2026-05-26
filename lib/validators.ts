@@ -51,7 +51,31 @@ export const ownerLoginSchema = z.object({
 
 export const approveClaimSchema = z.object({
   claimId: z.string().min(1),
-  password: z.string().min(8, "Privremena lozinka mora imati bar 8 karaktera"),
+  password: optionalString,
+});
+
+export const claimIdSchema = z.object({
+  claimId: z.string().min(1),
+});
+
+export const adminOwnerUpdateSchema = z.object({
+  ownerId: z.string().min(1),
+  name: optionalString,
+  email: z.string().trim().email("Email nije validan"),
+});
+
+export const adminOwnerPasswordSchema = z.object({
+  ownerId: z.string().min(1),
+  password: z.string().min(8, "Lozinka mora imati bar 8 karaktera"),
+});
+
+export const adminOwnerIdSchema = z.object({
+  ownerId: z.string().min(1),
+});
+
+export const adminOwnerStudioSchema = z.object({
+  ownerId: z.string().min(1),
+  studioId: z.string().min(1),
 });
 
 export const studioViewSchema = z.object({

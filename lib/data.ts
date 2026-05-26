@@ -6,6 +6,7 @@ import type {
   PublicCity,
   PublicClaimRequest,
   PublicInquiry,
+  PublicOwnerAccount,
   PublicService,
   PublicStudio,
   PublicStudioImage,
@@ -679,12 +680,66 @@ export const listClaimRequests = cache(
     return withFallback(async () => {
       const claims = await prisma.claimRequest.findMany({
         include: {
-          studio: { select: { id: true, name: true, slug: true } },
+          studio: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              owner: { select: { id: true, email: true, name: true } },
+            },
+          },
         },
         orderBy: { createdAt: "desc" },
       });
 
-      return claims;
+      const claimEmails = Array.from(
+        new Set(claims.map((claim) => claim.email.trim().toLowerCase())),
+      );
+      const owners =
+        claimEmails.length > 0
+          ? await prisma.user.findMany({
+              where: { role: "OWNER", email: { in: claimEmails } },
+              select: { id: true, email: true, name: true },
+            })
+          : [];
+      const ownersByEmail = new Map(
+        owners.map((owner) => [owner.email.toLowerCase(), owner]),
+      );
+
+      return claims.map((claim) => ({
+        ...claim,
+        ownerUser: ownersByEmail.get(claim.email.trim().toLowerCase()) ?? null,
+      }));
+    }, []);
+  },
+);
+
+export const listOwnerAccounts = cache(
+  async (): Promise<PublicOwnerAccount[]> => {
+    return withFallback(async () => {
+      const owners = await prisma.user.findMany({
+        where: { role: "OWNER" },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          createdAt: true,
+          updatedAt: true,
+          ownedStudios: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              status: true,
+              city: true,
+            },
+            orderBy: { updatedAt: "desc" },
+          },
+        },
+        orderBy: { updatedAt: "desc" },
+      });
+
+      return owners;
     }, []);
   },
 );

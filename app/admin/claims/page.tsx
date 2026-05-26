@@ -4,6 +4,7 @@ import { AdminNav } from "@/components/admin/AdminNav";
 import { DatabaseNotice } from "@/components/admin/DatabaseNotice";
 import {
   approveClaimAndCreateOwnerAction,
+  cancelClaimRequestAction,
   updateClaimStatusAction,
 } from "@/lib/admin-actions";
 import { listClaimRequests } from "@/lib/data";
@@ -22,8 +23,10 @@ export default async function AdminClaimsPage({
     approved?: string;
     database?: string;
     missing?: string;
+    password?: string;
     role?: string;
     saved?: string;
+    cancelled?: string;
   }>;
 }) {
   const [session, params, claims] = await Promise.all([
@@ -60,6 +63,19 @@ export default async function AdminClaimsPage({
           </div>
         ) : null}
 
+        {params.password ? (
+          <div className="mt-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm font-medium text-amber-900">
+            Za novi owner nalog morate uneti privremenu lozinku od najmanje 8
+            karaktera.
+          </div>
+        ) : null}
+
+        {params.cancelled ? (
+          <div className="mt-6 rounded-lg border border-zinc-200 bg-white p-4 text-sm font-medium text-zinc-700">
+            Claim zahtev je poništen.
+          </div>
+        ) : null}
+
         <div className="mt-6 space-y-4">
           {claims.length === 0 ? (
             <div className="rounded-lg border border-dashed border-zinc-300 bg-white p-8 text-center text-sm text-zinc-600">
@@ -87,25 +103,80 @@ export default async function AdminClaimsPage({
                       {claim.studio.name}
                     </Link>
                   </p>
+                  <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold">
+                    {claim.ownerUser ? (
+                      <span className="rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-sky-800">
+                        Email već ima owner nalog
+                      </span>
+                    ) : (
+                      <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-zinc-700">
+                        Novi owner nalog
+                      </span>
+                    )}
+                    {claim.studio.owner ? (
+                      <span className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-amber-800">
+                        Studio već ima ownera: {claim.studio.owner.email}
+                      </span>
+                    ) : (
+                      <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-emerald-800">
+                        Studio nema ownera
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <form action={updateClaimStatusAction} className="flex gap-2">
-                  <input type="hidden" name="id" value={claim.id} />
-                  <select
-                    name="status"
-                    defaultValue={claim.status}
-                    className="h-10 rounded-md border border-zinc-200 px-3 text-sm"
-                  >
-                    {statuses.map((status) => (
-                      <option value={status} key={status}>
-                        {status}
-                      </option>
-                    ))}
-                  </select>
-                  <button className="h-10 rounded-md bg-zinc-950 px-4 text-sm font-semibold text-white">
-                    Sačuvaj
-                  </button>
-                </form>
+                <div className="flex flex-wrap gap-2">
+                  <form action={updateClaimStatusAction} className="flex gap-2">
+                    <input type="hidden" name="id" value={claim.id} />
+                    <select
+                      name="status"
+                      defaultValue={claim.status}
+                      className="h-10 rounded-md border border-zinc-200 px-3 text-sm"
+                    >
+                      {statuses.map((status) => (
+                        <option value={status} key={status}>
+                          {status}
+                        </option>
+                      ))}
+                    </select>
+                    <button className="h-10 rounded-md bg-zinc-950 px-4 text-sm font-semibold text-white">
+                      Sačuvaj
+                    </button>
+                  </form>
+                  <form action={cancelClaimRequestAction}>
+                    <input type="hidden" name="claimId" value={claim.id} />
+                    <button
+                      className="h-10 rounded-md border border-red-200 px-4 text-sm font-semibold text-red-700 transition hover:bg-red-50"
+                      title="Briše claim zahtev iz liste. Ne briše owner nalog."
+                    >
+                      Poništi claim
+                    </button>
+                  </form>
+                </div>
               </div>
+              {claim.ownerUser || claim.studio.owner ? (
+                <div className="mt-4 rounded-lg border border-zinc-200 bg-zinc-50 p-4 text-sm leading-6 text-zinc-700">
+                  {claim.ownerUser ? (
+                    <p>
+                      Postojeći owner nalog:{" "}
+                      <Link
+                        href="/admin/owners"
+                        className="font-semibold text-zinc-950"
+                      >
+                        {claim.ownerUser.email}
+                      </Link>
+                      . Ako odobrite claim bez lozinke, ovaj nalog se povezuje
+                      sa studijom.
+                    </p>
+                  ) : null}
+                  {claim.studio.owner ? (
+                    <p>
+                      Trenutni owner studija je {claim.studio.owner.email}.
+                      Odobravanje ovog claim-a će prevezati studio na ownera iz
+                      zahteva.
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
               {claim.message ? (
                 <p className="mt-4 whitespace-pre-line text-sm leading-6 text-zinc-700">
                   {claim.message}
@@ -123,16 +194,21 @@ export default async function AdminClaimsPage({
                         Privremena owner lozinka
                       </span>
                       <input
-                        required
                         minLength={8}
                         name="password"
                         type="text"
-                        placeholder="Unesi lozinku koju šalješ vlasniku"
+                        placeholder={
+                          claim.ownerUser
+                            ? "Opcionalno: resetuj lozinku postojećem owneru"
+                            : "Obavezno za novi owner nalog"
+                        }
                         className="h-10 w-full rounded-md border border-zinc-200 bg-white px-3 text-sm outline-none focus:border-zinc-500"
                       />
                     </label>
                     <button className="h-10 rounded-md bg-emerald-700 px-4 text-sm font-semibold text-white transition hover:bg-emerald-800">
-                      Odobri i kreiraj owner nalog
+                      {claim.ownerUser
+                        ? "Odobri i poveži ownera"
+                        : "Odobri i kreiraj owner nalog"}
                     </button>
                   </div>
                   <p className="mt-2 text-xs leading-5 text-zinc-500">

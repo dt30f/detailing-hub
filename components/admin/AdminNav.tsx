@@ -10,6 +10,7 @@ const links = [
   { href: "/admin/cities", label: "Gradovi" },
   { href: "/admin/inquiries", label: "Upiti" },
   { href: "/admin/claims", label: "Claim" },
+  { href: "/admin/owners", label: "Owner nalozi" },
 ];
 
 export function AdminNav({ email }: { email: string }) {
