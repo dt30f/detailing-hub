@@ -133,11 +133,23 @@ export default async function Home() {
             </Link>
           </div>
 
-          <div className="mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-            {visibleStudios.map((studio) => (
-              <StudioCard studio={studio} key={studio.id} />
-            ))}
-          </div>
+          {visibleStudios.length > 0 ? (
+            <div className="mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+              {visibleStudios.map((studio) => (
+                <StudioCard studio={studio} key={studio.id} />
+              ))}
+            </div>
+          ) : (
+            <div className="mt-8 rounded-lg border border-dashed border-zinc-300 bg-zinc-50 p-10 text-center">
+              <h2 className="text-xl font-semibold text-zinc-950">
+                Profili se trenutno pripremaju
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-zinc-600">
+                Direktorijum je spreman, a javni profili će biti prikazani čim
+                produkciona baza bude povezana.
+              </p>
+            </div>
+          )}
         </div>
       </section>
 

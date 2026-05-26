@@ -145,6 +145,17 @@ function filterSampleStudios(filters: StudioFilters = {}) {
     });
 }
 
+function shouldUseSampleStudioFallback() {
+  return (
+    process.env.NODE_ENV !== "production" ||
+    process.env.NEXT_PUBLIC_ENABLE_DEMO_FALLBACK === "true"
+  );
+}
+
+function getSampleStudioFallback(filters: StudioFilters = {}) {
+  return shouldUseSampleStudioFallback() ? filterSampleStudios(filters) : [];
+}
+
 async function withFallback<T>(query: () => Promise<T>, fallback: T) {
   if (!isDatabaseConfigured()) {
     return fallback;
@@ -207,7 +218,7 @@ export const getServices = cache(async (): Promise<PublicService[]> => {
 
 export const listStudios = cache(
   async (filters: StudioFilters = {}): Promise<PublicStudio[]> => {
-    const fallback = filterSampleStudios(filters);
+    const fallback = getSampleStudioFallback(filters);
 
     return withFallback(async () => {
       const where: Prisma.DetailingStudioWhereInput = {};
@@ -453,10 +464,11 @@ export const listCityServiceLandingPages = cache(
 
 export const getStudioBySlug = cache(
   async (slug: string): Promise<PublicStudio | null> => {
-    const fallback =
-      sampleStudios.find(
-        (studio) => studio.slug === slug && studio.status !== "HIDDEN",
-      ) ?? null;
+    const fallback = shouldUseSampleStudioFallback()
+      ? sampleStudios.find(
+          (studio) => studio.slug === slug && studio.status !== "HIDDEN",
+        ) ?? null
+      : null;
 
     return withFallback(async () => {
       const studio = await prisma.detailingStudio.findFirst({
@@ -471,7 +483,9 @@ export const getStudioBySlug = cache(
 
 export const getStudioById = cache(
   async (id: string): Promise<PublicStudio | null> => {
-    const fallback = sampleStudios.find((studio) => studio.id === id) ?? null;
+    const fallback = shouldUseSampleStudioFallback()
+      ? sampleStudios.find((studio) => studio.id === id) ?? null
+      : null;
 
     return withFallback(async () => {
       const studio = await prisma.detailingStudio.findUnique({
@@ -508,9 +522,10 @@ export const getServiceBySlug = cache(
 );
 
 export const getDashboardStats = cache(async () => {
+  const fallbackStudios = getSampleStudioFallback({ includeHidden: true });
   const fallback = {
-    studios: sampleStudios.length,
-    unclaimed: sampleStudios.filter((studio) => studio.status === "UNCLAIMED")
+    studios: fallbackStudios.length,
+    unclaimed: fallbackStudios.filter((studio) => studio.status === "UNCLAIMED")
       .length,
     services: sampleServices.length,
     cities: sampleCities.length,
