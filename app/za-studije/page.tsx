@@ -4,8 +4,10 @@ import {
   ArrowRight,
   BadgeCheck,
   Mail,
+  Phone,
   Search,
   ShieldCheck,
+  UserRound,
 } from "lucide-react";
 
 export const metadata: Metadata = {
@@ -137,8 +139,22 @@ export default function StudiosLandingPage() {
         </div>
       </section>
 
-      <section id="kontakt" className="bg-white">
-        <div className="mx-auto grid max-w-7xl gap-6 px-4 py-14 sm:px-6 lg:grid-cols-2 lg:px-8">
+      <section id="kontakt" className="scroll-mt-24 bg-white">
+        <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+          <div className="max-w-2xl">
+            <p className="text-sm font-semibold uppercase tracking-[0.14em] text-teal-700">
+              Kontakt
+            </p>
+            <h2 className="mt-2 text-3xl font-semibold text-zinc-950">
+              Kako nas kontaktirati
+            </h2>
+            <p className="mt-3 text-sm leading-6 text-zinc-600">
+              Za preuzimanje postojećeg profila, prijavu novog studija ili
+              ispravku podataka možete koristiti odgovarajući tok ispod.
+            </p>
+          </div>
+
+          <div className="mt-8 grid gap-6 lg:grid-cols-3">
           <div className="rounded-lg border border-zinc-200 bg-white p-6">
             <Search className="text-sky-600" size={24} />
             <h2 className="mt-4 text-xl font-semibold text-zinc-950">
@@ -157,15 +173,52 @@ export default function StudiosLandingPage() {
             </Link>
           </div>
 
+          <div className="rounded-lg border border-zinc-200 bg-white p-6">
+            <ShieldCheck className="text-emerald-700" size={24} />
+            <h2 className="mt-4 text-xl font-semibold text-zinc-950">
+              Ako profil ne postoji
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-zinc-600">
+              Studio može sam da pošalje profil na proveru i odmah napravi
+              owner nalog. Profil se javno prikazuje tek kada ga admin odobri.
+            </p>
+            <Link
+              href="/dodaj-studio"
+              className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-zinc-950"
+            >
+              Dodaj novi studio
+              <ArrowRight size={16} />
+            </Link>
+          </div>
+
           <div className="rounded-lg border border-zinc-200 bg-zinc-950 p-6 text-white">
             <Mail className="text-teal-300" size={24} />
-            <h2 className="mt-4 text-xl font-semibold">Ako profil ne postoji</h2>
-            <p className="mt-2 text-sm leading-6 text-zinc-300">
-              Za sada je najbrže da nam pošaljete osnovne podatke studija kroz
-              poruku na najbližem relevantnom profilu ili da nas kontaktirate
-              direktno kada otvorimo javni kontakt kanal. U sledećoj fazi
-              dodajemo posebnu formu za prijavu novog studija.
-            </p>
+            <h2 className="mt-4 text-xl font-semibold">Direktan kontakt</h2>
+            <div className="mt-4 space-y-3 text-sm leading-6 text-zinc-300">
+              <p className="flex gap-3">
+                <UserRound className="mt-0.5 shrink-0 text-teal-300" size={17} />
+                <span>Djordje Teofilovic</span>
+              </p>
+              <p className="flex gap-3">
+                <Mail className="mt-0.5 shrink-0 text-teal-300" size={17} />
+                <a
+                  href="mailto:djoleteofilovic@gmail.com"
+                  className="font-semibold text-white transition hover:text-teal-200"
+                >
+                  djoleteofilovic@gmail.com
+                </a>
+              </p>
+              <p className="flex gap-3">
+                <Phone className="mt-0.5 shrink-0 text-teal-300" size={17} />
+                <a
+                  href="tel:+381645959781"
+                  className="font-semibold text-white transition hover:text-teal-200"
+                >
+                  0645959781
+                </a>
+              </p>
+            </div>
+          </div>
           </div>
         </div>
       </section>

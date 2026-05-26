@@ -91,7 +91,9 @@ export default async function StudioPage({ params, searchParams }: Props) {
               <ContactButtons studio={studio} />
             </div>
           </div>
-          <ClaimProfileBox studio={studio} />
+          {studio.status === "UNCLAIMED" ? (
+            <ClaimProfileBox studio={studio} />
+          ) : null}
         </div>
 
         <div className="space-y-6">

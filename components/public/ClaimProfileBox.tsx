@@ -3,6 +3,10 @@ import { submitClaimRequestAction } from "@/app/actions";
 import type { PublicStudio } from "@/lib/types";
 
 export function ClaimProfileBox({ studio }: { studio: PublicStudio }) {
+  if (studio.status !== "UNCLAIMED") {
+    return null;
+  }
+
   return (
     <section className="rounded-lg border border-amber-200 bg-amber-50 p-5">
       <div className="flex items-start gap-3">
