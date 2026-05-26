@@ -172,16 +172,20 @@ export default async function Home() {
             pošaljite upit bez obilaska desetina profila.
           </p>
         </div>
-        <div
-          id="za-studije"
-          className="rounded-lg border border-zinc-200 bg-white p-6"
-        >
+        <div className="rounded-lg border border-zinc-200 bg-white p-6">
           <ShieldCheck className="text-amber-700" size={24} />
           <h2 className="mt-4 text-xl font-semibold">Za detailing studije</h2>
           <p className="mt-2 text-sm leading-6 text-zinc-600">
             Neovereni profili su jasno označeni. Vlasnik može da zatraži izmenu,
             preuzimanje ili uklanjanje profila.
           </p>
+          <Link
+            href="/za-studije"
+            className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-zinc-950"
+          >
+            Kako preuzeti profil
+            <ArrowRight size={16} />
+          </Link>
         </div>
       </section>
     </div>
