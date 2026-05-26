@@ -9,6 +9,7 @@ type StudioFormProps = {
 
 const statusOptions = [
   ["UNCLAIMED", "Neoveren"],
+  ["PENDING_REVIEW", "Čeka proveru"],
   ["CLAIMED", "Preuzet"],
   ["VERIFIED", "Verifikovan"],
   ["HIDDEN", "Sakriven"],

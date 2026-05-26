@@ -617,6 +617,9 @@ export const getDashboardStats = cache(async () => {
     studios: fallbackStudios.length,
     unclaimed: fallbackStudios.filter((studio) => studio.status === "UNCLAIMED")
       .length,
+    pendingReview: fallbackStudios.filter(
+      (studio) => studio.status === "PENDING_REVIEW",
+    ).length,
     services: sampleServices.length,
     cities: sampleCities.length,
     inquiries: 0,
@@ -630,6 +633,7 @@ export const getDashboardStats = cache(async () => {
     const [
       studios,
       unclaimed,
+      pendingReview,
       services,
       cities,
       inquiries,
@@ -640,6 +644,7 @@ export const getDashboardStats = cache(async () => {
       await Promise.all([
         prisma.detailingStudio.count(),
         prisma.detailingStudio.count({ where: { status: "UNCLAIMED" } }),
+        prisma.detailingStudio.count({ where: { status: "PENDING_REVIEW" } }),
         prisma.service.count(),
         prisma.city.count(),
         prisma.inquiry.count({ where: { status: "NEW" } }),
@@ -651,6 +656,7 @@ export const getDashboardStats = cache(async () => {
     return {
       studios,
       unclaimed,
+      pendingReview,
       services,
       cities,
       inquiries,

@@ -3,7 +3,12 @@ import { notFound } from "next/navigation";
 import { AdminNav } from "@/components/admin/AdminNav";
 import { DatabaseNotice } from "@/components/admin/DatabaseNotice";
 import { StudioForm } from "@/components/admin/StudioForm";
-import { hideStudioAction, updateStudioAction } from "@/lib/admin-actions";
+import {
+  approvePendingStudioAction,
+  hideStudioAction,
+  rejectPendingStudioAction,
+  updateStudioAction,
+} from "@/lib/admin-actions";
 import {
   getCities,
   getServices,
@@ -56,6 +61,31 @@ export default async function EditStudioPage({
 
         <h1 className="text-3xl font-semibold tracking-tight">{studio.name}</h1>
         <p className="mt-2 text-sm text-zinc-600">Izmena profila studija.</p>
+        {studio.status === "PENDING_REVIEW" ? (
+          <div className="mt-6 rounded-lg border border-violet-200 bg-violet-50 p-5">
+            <h2 className="font-semibold text-violet-950">
+              Profil čeka proveru
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-violet-900">
+              Vlasnik je sam prijavio studio. Odobrite ga za javni prikaz ili
+              ga odbijte i ostavite van direktorijuma.
+            </p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <form action={approvePendingStudioAction}>
+                <input type="hidden" name="studioId" value={studio.id} />
+                <button className="h-10 rounded-md bg-emerald-700 px-4 text-sm font-semibold text-white transition hover:bg-emerald-800">
+                  Odobri profil
+                </button>
+              </form>
+              <form action={rejectPendingStudioAction}>
+                <input type="hidden" name="studioId" value={studio.id} />
+                <button className="h-10 rounded-md border border-red-200 bg-white px-4 text-sm font-semibold text-red-700 transition hover:bg-red-50">
+                  Odbij profil
+                </button>
+              </form>
+            </div>
+          </div>
+        ) : null}
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
           <div className="rounded-lg border border-zinc-200 bg-white p-5">
             <p className="text-sm font-medium text-zinc-500">Ukupno pregleda</p>

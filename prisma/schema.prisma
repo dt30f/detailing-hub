@@ -19,6 +19,7 @@ enum UserRole {
 
 enum StudioStatus {
   UNCLAIMED
+  PENDING_REVIEW
   CLAIMED
   VERIFIED
   HIDDEN

@@ -9,6 +9,7 @@ import {
   adminOwnerPasswordSchema,
   adminOwnerStudioSchema,
   adminOwnerUpdateSchema,
+  adminStudioIdSchema,
   approveClaimSchema,
   claimIdSchema,
   cityFormSchema,
@@ -437,4 +438,50 @@ export async function deleteOwnerAccountAction(formData: FormData) {
 
   revalidatePath("/admin/owners");
   redirect("/admin/owners?deleted=1");
+}
+
+export async function approvePendingStudioAction(formData: FormData) {
+  await requireAdmin();
+  requireDatabase("/admin/studios");
+
+  const data = adminStudioIdSchema.parse({
+    studioId: formData.get("studioId"),
+  });
+
+  const studio = await prisma.detailingStudio.update({
+    where: { id: data.studioId },
+    data: {
+      status: "CLAIMED",
+      isActive: true,
+      sourceNote: "Profil je poslao vlasnik i odobren je od strane admina.",
+    },
+  });
+
+  revalidatePath("/admin/studios");
+  revalidatePath(`/admin/studios/${studio.id}`);
+  revalidatePath("/studiji");
+  revalidatePath(`/studiji/${studio.slug}`);
+  redirect("/admin/studios?approved=1");
+}
+
+export async function rejectPendingStudioAction(formData: FormData) {
+  await requireAdmin();
+  requireDatabase("/admin/studios");
+
+  const data = adminStudioIdSchema.parse({
+    studioId: formData.get("studioId"),
+  });
+
+  const studio = await prisma.detailingStudio.update({
+    where: { id: data.studioId },
+    data: {
+      status: "HIDDEN",
+      isActive: false,
+      sourceNote: "Profil je poslao vlasnik, ali nije odobren za javni prikaz.",
+    },
+  });
+
+  revalidatePath("/admin/studios");
+  revalidatePath(`/admin/studios/${studio.id}`);
+  redirect("/admin/studios?rejected=1");
 }

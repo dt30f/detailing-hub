@@ -78,6 +78,10 @@ export const adminOwnerStudioSchema = z.object({
   studioId: z.string().min(1),
 });
 
+export const adminStudioIdSchema = z.object({
+  studioId: z.string().min(1),
+});
+
 export const studioViewSchema = z.object({
   studioId: z.string().min(1),
   pathname: optionalString,
@@ -113,6 +117,26 @@ export const ownerStudioImageSchema = z.object({
   type: z.enum(["GENERAL", "BEFORE_AFTER", "WORKSHOP", "EXTERIOR"]),
 });
 
+export const submitStudioSchema = z.object({
+  studioName: z.string().trim().min(2, "Naziv studija je obavezan"),
+  cityId: z.string().min(1, "Grad je obavezan"),
+  municipality: optionalString,
+  address: optionalString,
+  phone: optionalString,
+  email: optionalString,
+  website: optionalUrl,
+  instagram: optionalUrl,
+  whatsapp: optionalString,
+  type: z.enum(["STUDIO", "MOBILE", "BOTH"]),
+  shortDescription: optionalString,
+  description: optionalString,
+  serviceIds: z.array(z.string()).min(1, "Izaberite bar jednu uslugu"),
+  ownerName: z.string().trim().min(2, "Ime vlasnika je obavezno"),
+  ownerEmail: z.string().trim().email("Owner email nije validan"),
+  password: z.string().min(8, "Lozinka mora imati bar 8 karaktera"),
+  websiteTrap: optionalString,
+});
+
 export const studioFormSchema = z.object({
   name: z.string().trim().min(2),
   slug: optionalString,
@@ -127,7 +151,13 @@ export const studioFormSchema = z.object({
   instagram: optionalUrl,
   whatsapp: optionalString,
   type: z.enum(["STUDIO", "MOBILE", "BOTH"]),
-  status: z.enum(["UNCLAIMED", "CLAIMED", "VERIFIED", "HIDDEN"]),
+  status: z.enum([
+    "UNCLAIMED",
+    "PENDING_REVIEW",
+    "CLAIMED",
+    "VERIFIED",
+    "HIDDEN",
+  ]),
   sourceNote: optionalString,
   isFeatured: z.boolean(),
   isPremium: z.boolean(),

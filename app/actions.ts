@@ -2,7 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { createClaimRequest, createInquiry } from "@/lib/mutations";
+import {
+  createClaimRequest,
+  createInquiry,
+  createSubmittedStudio,
+} from "@/lib/mutations";
+import { createOwnerSession } from "@/lib/auth";
 
 function formDataToObject(formData: FormData) {
   return Object.fromEntries(formData.entries());
@@ -32,4 +37,19 @@ export async function submitClaimRequestAction(formData: FormData) {
   }
 
   redirect("/studiji?claim=1");
+}
+
+export async function submitStudioAction(formData: FormData) {
+  const result = await createSubmittedStudio({
+    ...formDataToObject(formData),
+    serviceIds: formData.getAll("serviceIds").map(String),
+  });
+
+  if (result.status === "created" && result.ownerEmail) {
+    await createOwnerSession(result.ownerEmail);
+    revalidatePath("/admin/studios");
+    redirect("/studio?submitted=1");
+  }
+
+  redirect(`/dodaj-studio?error=${result.status}`);
 }

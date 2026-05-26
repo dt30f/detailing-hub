@@ -41,6 +41,12 @@ export default async function AdminPage() {
       icon: Inbox,
     },
     {
+      href: "/admin/studios",
+      label: "Čeka proveru",
+      value: stats.pendingReview,
+      icon: Building2,
+    },
+    {
       href: "/admin/analytics",
       label: "Pregledi 7 dana",
       value: stats.profileViews7Days,
@@ -76,7 +82,7 @@ export default async function AdminPage() {
           </Link>
         </div>
 
-        <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+        <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-6">
           {cards.map((card) => {
             const Icon = card.icon;
             return (

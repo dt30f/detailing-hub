@@ -1,4 +1,9 @@
-export type StudioStatus = "UNCLAIMED" | "CLAIMED" | "VERIFIED" | "HIDDEN";
+export type StudioStatus =
+  | "UNCLAIMED"
+  | "PENDING_REVIEW"
+  | "CLAIMED"
+  | "VERIFIED"
+  | "HIDDEN";
 export type StudioType = "STUDIO" | "MOBILE" | "BOTH";
 export type ImageType =
   | "GENERAL"

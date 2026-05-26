@@ -61,6 +61,12 @@ export default function StudiosLandingPage() {
                 <ArrowRight size={16} />
               </Link>
               <Link
+                href="/dodaj-studio"
+                className="inline-flex h-12 items-center rounded-full border border-zinc-300 px-6 text-sm font-semibold text-zinc-950 transition hover:bg-zinc-100"
+              >
+                Dodaj novi studio
+              </Link>
+              <Link
                 href="#kontakt"
                 className="inline-flex h-12 items-center rounded-full border border-zinc-300 px-6 text-sm font-semibold text-zinc-950 transition hover:bg-zinc-100"
               >

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, Eye, Inbox, Settings } from "lucide-react";
 import { OwnerNav } from "@/components/owner/OwnerNav";
+import { StatusBadge } from "@/components/public/StatusBadge";
 import { requireOwner } from "@/lib/auth";
 import { listOwnerInquiries, listOwnerStudioSummaries } from "@/lib/data";
 
@@ -16,7 +17,7 @@ function statLabel(value: number) {
 export default async function StudioDashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ forbidden?: string }>;
+  searchParams: Promise<{ forbidden?: string; submitted?: string }>;
 }) {
   const [session, params] = await Promise.all([requireOwner(), searchParams]);
   const [summaries, inquiries] = await Promise.all([
@@ -31,6 +32,13 @@ export default async function StudioDashboardPage({
         {params.forbidden ? (
           <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800">
             Nemate pristup tom profilu.
+          </div>
+        ) : null}
+
+        {params.submitted ? (
+          <div className="mb-6 rounded-lg border border-violet-200 bg-violet-50 p-4 text-sm font-medium text-violet-900">
+            Studio je poslat na proveru. Možete dopuniti podatke u panelu, a
+            javno će se prikazati tek kada ga admin odobri.
           </div>
         ) : null}
 
@@ -74,10 +82,18 @@ export default async function StudioDashboardPage({
                   <h2 className="text-2xl font-semibold text-zinc-950">
                     {studio.name}
                   </h2>
-                  <p className="mt-1 text-sm text-zinc-600">
-                    {studio.city.name}
-                    {studio.municipality ? `, ${studio.municipality}` : ""}
-                  </p>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <StatusBadge status={studio.status} />
+                    <p className="text-sm text-zinc-600">
+                      {studio.city.name}
+                      {studio.municipality ? `, ${studio.municipality}` : ""}
+                    </p>
+                  </div>
+                  {studio.status === "PENDING_REVIEW" ? (
+                    <p className="mt-3 text-sm leading-6 text-violet-800">
+                      Profil čeka admin proveru i nije javno prikazan.
+                    </p>
+                  ) : null}
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <Link
@@ -87,12 +103,14 @@ export default async function StudioDashboardPage({
                     <Settings size={16} />
                     Uredi profil
                   </Link>
-                  <Link
-                    href={`/studiji/${studio.slug}`}
-                    className="inline-flex h-10 items-center rounded-md bg-zinc-950 px-4 text-sm font-semibold text-white transition hover:bg-zinc-800"
-                  >
-                    Javni profil
-                  </Link>
+                  {studio.isActive && studio.status !== "PENDING_REVIEW" ? (
+                    <Link
+                      href={`/studiji/${studio.slug}`}
+                      className="inline-flex h-10 items-center rounded-md bg-zinc-950 px-4 text-sm font-semibold text-white transition hover:bg-zinc-800"
+                    >
+                      Javni profil
+                    </Link>
+                  ) : null}
                 </div>
               </div>
 
