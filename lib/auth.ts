@@ -6,7 +6,8 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma, isDatabaseConfigured } from "@/lib/prisma";
 
-const COOKIE_NAME = "detailinghub_admin";
+const ADMIN_COOKIE_NAME = "detailinghub_admin";
+const OWNER_COOKIE_NAME = "detailinghub_owner";
 
 function getSecret() {
   return process.env.AUTH_SECRET || "dev-detailinghub-secret";
@@ -69,10 +70,27 @@ export async function verifyAdminCredentials(email: string, password: string) {
   return null;
 }
 
+export async function verifyOwnerCredentials(email: string, password: string) {
+  if (!isDatabaseConfigured()) {
+    return null;
+  }
+
+  const normalizedEmail = email.trim().toLowerCase();
+  const user = await prisma.user.findUnique({
+    where: { email: normalizedEmail },
+  });
+
+  if (user?.role === "OWNER" && (await compare(password, user.passwordHash))) {
+    return normalizedEmail;
+  }
+
+  return null;
+}
+
 export async function createAdminSession(email: string) {
   const cookieStore = await cookies();
 
-  cookieStore.set(COOKIE_NAME, createToken(email), {
+  cookieStore.set(ADMIN_COOKIE_NAME, createToken(email), {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
@@ -81,16 +99,62 @@ export async function createAdminSession(email: string) {
   });
 }
 
+export async function createOwnerSession(email: string) {
+  const cookieStore = await cookies();
+
+  cookieStore.set(OWNER_COOKIE_NAME, createToken(email), {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 14,
+  });
+}
+
 export async function clearAdminSession() {
   const cookieStore = await cookies();
-  cookieStore.delete(COOKIE_NAME);
+  cookieStore.delete(ADMIN_COOKIE_NAME);
+}
+
+export async function clearOwnerSession() {
+  const cookieStore = await cookies();
+  cookieStore.delete(OWNER_COOKIE_NAME);
 }
 
 export async function getAdminSession() {
   const cookieStore = await cookies();
-  const email = verifyToken(cookieStore.get(COOKIE_NAME)?.value);
+  const email = verifyToken(cookieStore.get(ADMIN_COOKIE_NAME)?.value);
 
   return email ? { email } : null;
+}
+
+export async function getOwnerSession() {
+  const cookieStore = await cookies();
+  const email = verifyToken(cookieStore.get(OWNER_COOKIE_NAME)?.value);
+
+  if (!email || !isDatabaseConfigured()) {
+    return null;
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { email },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      role: true,
+      ownedStudios: {
+        select: { id: true, name: true, slug: true },
+        orderBy: { updatedAt: "desc" },
+      },
+    },
+  });
+
+  if (!user || user.role !== "OWNER") {
+    return null;
+  }
+
+  return user;
 }
 
 export async function requireAdmin() {
@@ -98,6 +162,16 @@ export async function requireAdmin() {
 
   if (!session) {
     redirect("/admin/login");
+  }
+
+  return session;
+}
+
+export async function requireOwner() {
+  const session = await getOwnerSession();
+
+  if (!session) {
+    redirect("/studio/login");
   }
 
   return session;

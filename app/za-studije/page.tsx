@@ -66,6 +66,12 @@ export default function StudiosLandingPage() {
               >
                 Kako nas kontaktirati
               </Link>
+              <Link
+                href="/studio/login"
+                className="inline-flex h-12 items-center rounded-full border border-zinc-300 px-6 text-sm font-semibold text-zinc-950 transition hover:bg-zinc-100"
+              >
+                Studio login
+              </Link>
             </div>
           </div>
 

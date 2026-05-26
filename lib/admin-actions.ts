@@ -2,8 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { hash } from "bcryptjs";
 import { prisma, isDatabaseConfigured } from "@/lib/prisma";
 import {
+  approveClaimSchema,
   cityFormSchema,
   serviceFormSchema,
   studioFormSchema,
@@ -241,4 +243,72 @@ export async function updateClaimStatusAction(formData: FormData) {
 
   revalidatePath("/admin/claims");
   redirect("/admin/claims?saved=1");
+}
+
+export async function approveClaimAndCreateOwnerAction(formData: FormData) {
+  await requireAdmin();
+  requireDatabase("/admin/claims");
+
+  const data = approveClaimSchema.parse({
+    claimId: formData.get("claimId"),
+    password: formData.get("password"),
+  });
+
+  const claim = await prisma.claimRequest.findUnique({
+    where: { id: data.claimId },
+    include: { studio: true },
+  });
+
+  if (!claim) {
+    redirect("/admin/claims?missing=1");
+  }
+
+  const normalizedEmail = claim.email.trim().toLowerCase();
+  const existingUser = await prisma.user.findUnique({
+    where: { email: normalizedEmail },
+  });
+
+  if (existingUser && existingUser.role !== "OWNER") {
+    redirect("/admin/claims?role=invalid");
+  }
+
+  const passwordHash = await hash(data.password, 10);
+
+  await prisma.$transaction(async (tx) => {
+    const owner = existingUser
+      ? await tx.user.update({
+          where: { id: existingUser.id },
+          data: {
+            name: claim.ownerName,
+            passwordHash,
+          },
+        })
+      : await tx.user.create({
+          data: {
+            email: normalizedEmail,
+            name: claim.ownerName,
+            passwordHash,
+            role: "OWNER",
+          },
+        });
+
+    await tx.detailingStudio.update({
+      where: { id: claim.studioId },
+      data: {
+        ownerId: owner.id,
+        status: claim.studio.status === "VERIFIED" ? "VERIFIED" : "CLAIMED",
+      },
+    });
+
+    await tx.claimRequest.update({
+      where: { id: claim.id },
+      data: { status: "APPROVED" },
+    });
+  });
+
+  revalidatePath("/admin/claims");
+  revalidatePath("/admin/studios");
+  revalidatePath(`/admin/studios/${claim.studioId}`);
+  revalidatePath(`/studiji/${claim.studio.slug}`);
+  redirect("/admin/claims?approved=1");
 }

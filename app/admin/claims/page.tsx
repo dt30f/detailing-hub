@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { AdminNav } from "@/components/admin/AdminNav";
 import { DatabaseNotice } from "@/components/admin/DatabaseNotice";
-import { updateClaimStatusAction } from "@/lib/admin-actions";
+import {
+  approveClaimAndCreateOwnerAction,
+  updateClaimStatusAction,
+} from "@/lib/admin-actions";
 import { listClaimRequests } from "@/lib/data";
 import { requireAdmin } from "@/lib/auth";
 
@@ -15,7 +18,13 @@ const statuses = ["PENDING", "APPROVED", "REJECTED"];
 export default async function AdminClaimsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ database?: string; saved?: string }>;
+  searchParams: Promise<{
+    approved?: string;
+    database?: string;
+    missing?: string;
+    role?: string;
+    saved?: string;
+  }>;
 }) {
   const [session, params, claims] = await Promise.all([
     requireAdmin(),
@@ -36,6 +45,20 @@ export default async function AdminClaimsPage({
         <p className="mt-2 text-sm text-zinc-600">
           Zahtevi vlasnika za preuzimanje, izmenu ili uklanjanje profila.
         </p>
+
+        {params.approved ? (
+          <div className="mt-6 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm font-medium text-emerald-800">
+            Claim je odobren, owner nalog je kreiran ili ažuriran, a studio je
+            povezan sa vlasnikom.
+          </div>
+        ) : null}
+
+        {params.role ? (
+          <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800">
+            Email sa claim zahteva već postoji kao admin nalog. Koristite drugi
+            email za owner pristup.
+          </div>
+        ) : null}
 
         <div className="mt-6 space-y-4">
           {claims.length === 0 ? (
@@ -87,6 +110,36 @@ export default async function AdminClaimsPage({
                 <p className="mt-4 whitespace-pre-line text-sm leading-6 text-zinc-700">
                   {claim.message}
                 </p>
+              ) : null}
+              {claim.status === "PENDING" ? (
+                <form
+                  action={approveClaimAndCreateOwnerAction}
+                  className="mt-5 rounded-lg border border-zinc-200 bg-zinc-50 p-4"
+                >
+                  <input type="hidden" name="claimId" value={claim.id} />
+                  <div className="grid gap-3 md:grid-cols-[1fr_auto] md:items-end">
+                    <label className="space-y-1.5">
+                      <span className="text-sm font-medium">
+                        Privremena owner lozinka
+                      </span>
+                      <input
+                        required
+                        minLength={8}
+                        name="password"
+                        type="text"
+                        placeholder="Unesi lozinku koju šalješ vlasniku"
+                        className="h-10 w-full rounded-md border border-zinc-200 bg-white px-3 text-sm outline-none focus:border-zinc-500"
+                      />
+                    </label>
+                    <button className="h-10 rounded-md bg-emerald-700 px-4 text-sm font-semibold text-white transition hover:bg-emerald-800">
+                      Odobri i kreiraj owner nalog
+                    </button>
+                  </div>
+                  <p className="mt-2 text-xs leading-5 text-zinc-500">
+                    Ova akcija povezuje studio sa owner nalogom, prebacuje
+                    status profila na preuzet i omogućava login na /studio.
+                  </p>
+                </form>
               ) : null}
             </article>
           ))}

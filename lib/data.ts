@@ -46,6 +46,15 @@ export type StudioAnalyticsRow = {
   lastViewedAt?: Date | null;
 };
 
+export type OwnerStudioSummary = {
+  studio: PublicStudio;
+  totalViews: number;
+  viewsLast7Days: number;
+  viewsLast30Days: number;
+  inquiries: number;
+  newInquiries: number;
+};
+
 type StudioRecord = Omit<PublicStudio, "services" | "images"> & {
   services?: PublicStudioService[];
   images?: PublicStudioImage[];
@@ -344,6 +353,86 @@ export const getStudioAnalytics = cache(async (studioId: string) => {
     return { totalViews, viewsLast7Days };
   }, { totalViews: 0, viewsLast7Days: 0 });
 });
+
+export async function listOwnerStudioSummaries(
+  ownerId: string,
+): Promise<OwnerStudioSummary[]> {
+  if (!isDatabaseConfigured()) {
+    return [];
+  }
+
+  const studios = await prisma.detailingStudio.findMany({
+    where: { ownerId },
+    include: studioInclude,
+    orderBy: { updatedAt: "desc" },
+  });
+
+  const since7Days = getViewsSinceDate(7);
+  const since30Days = getViewsSinceDate(30);
+
+  return Promise.all(
+    studios.map(async (studio) => {
+      const [totalViews, viewsLast7Days, viewsLast30Days, inquiries, newInquiries] =
+        await Promise.all([
+          prisma.studioView.count({ where: { studioId: studio.id } }),
+          prisma.studioView.count({
+            where: { studioId: studio.id, createdAt: { gte: since7Days } },
+          }),
+          prisma.studioView.count({
+            where: { studioId: studio.id, createdAt: { gte: since30Days } },
+          }),
+          prisma.inquiry.count({ where: { studioId: studio.id } }),
+          prisma.inquiry.count({
+            where: { studioId: studio.id, status: "NEW" },
+          }),
+        ]);
+
+      return {
+        studio: mapStudio(studio),
+        totalViews,
+        viewsLast7Days,
+        viewsLast30Days,
+        inquiries,
+        newInquiries,
+      };
+    }),
+  );
+}
+
+export async function getOwnerStudioById(ownerId: string, studioId?: string) {
+  if (!isDatabaseConfigured()) {
+    return null;
+  }
+
+  const studio = studioId
+    ? await prisma.detailingStudio.findFirst({
+        where: { id: studioId, ownerId },
+        include: studioInclude,
+      })
+    : await prisma.detailingStudio.findFirst({
+        where: { ownerId },
+        include: studioInclude,
+        orderBy: { updatedAt: "desc" },
+      });
+
+  return studio ? mapStudio(studio) : null;
+}
+
+export async function listOwnerInquiries(ownerId: string) {
+  if (!isDatabaseConfigured()) {
+    return [];
+  }
+
+  return prisma.inquiry.findMany({
+    where: { studio: { ownerId } },
+    include: {
+      studio: { select: { id: true, name: true, slug: true } },
+      service: true,
+    },
+    orderBy: { createdAt: "desc" },
+    take: 20,
+  });
+}
 
 export const listStudioAnalyticsRows = cache(
   async (): Promise<StudioAnalyticsRow[]> => {

@@ -44,9 +44,49 @@ export const claimRequestSchema = z
     path: ["website"],
   });
 
+export const ownerLoginSchema = z.object({
+  email: z.string().trim().email("Email nije validan"),
+  password: z.string().min(8, "Lozinka mora imati bar 8 karaktera"),
+});
+
+export const approveClaimSchema = z.object({
+  claimId: z.string().min(1),
+  password: z.string().min(8, "Privremena lozinka mora imati bar 8 karaktera"),
+});
+
 export const studioViewSchema = z.object({
   studioId: z.string().min(1),
   pathname: optionalString,
+});
+
+export const ownerStudioProfileSchema = z.object({
+  studioId: z.string().min(1),
+  shortDescription: optionalString,
+  description: optionalString,
+  municipality: optionalString,
+  address: optionalString,
+  phone: optionalString,
+  email: optionalString,
+  website: optionalUrl,
+  instagram: optionalUrl,
+  whatsapp: optionalString,
+  type: z.enum(["STUDIO", "MOBILE", "BOTH"]),
+});
+
+export const ownerStudioServicesSchema = z.object({
+  studioId: z.string().min(1),
+  serviceIds: z.array(z.string()),
+  priceFrom: z.record(z.string(), optionalString),
+  priceTo: z.record(z.string(), optionalString),
+  durationMin: z.record(z.string(), optionalString),
+  description: z.record(z.string(), optionalString),
+});
+
+export const ownerStudioImageSchema = z.object({
+  studioId: z.string().min(1),
+  url: optionalUrl,
+  alt: optionalString,
+  type: z.enum(["GENERAL", "BEFORE_AFTER", "WORKSHOP", "EXTERIOR"]),
 });
 
 export const studioFormSchema = z.object({
