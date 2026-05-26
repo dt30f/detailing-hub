@@ -1,13 +1,10 @@
+import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, BadgeCheck, MapPin, Search, ShieldCheck } from "lucide-react";
+import { ArrowRight, BadgeCheck, MapPin, ShieldCheck, Sparkles } from "lucide-react";
 import { Filters } from "@/components/public/Filters";
 import { ServiceBadge } from "@/components/public/ServiceBadge";
 import { StudioCard } from "@/components/public/StudioCard";
-import {
-  getCities,
-  getServices,
-  listStudios,
-} from "@/lib/data";
+import { getCities, getServices, listStudios } from "@/lib/data";
 
 export default async function Home() {
   const [cities, services, studios] = await Promise.all([
@@ -16,66 +13,76 @@ export default async function Home() {
     listStudios(),
   ]);
   const visibleStudios = studios.slice(0, 6);
+  const heroImage = "/Hero/MCYXVMMAMWLZH3ZLS5FZTOGW7HQA.avif";
 
   return (
     <div>
-      <section className="bg-zinc-950 text-white">
-        <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:px-8 lg:py-20">
-          <div className="flex flex-col justify-center">
-            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-300">
-              Auto detailing Srbija
-            </p>
-            <h1 className="mt-4 max-w-3xl text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
-              Pronađi detailing studio za dubinsko pranje, poliranje, keramiku
-              i PPF.
-            </h1>
-            <p className="mt-5 max-w-2xl text-base leading-8 text-zinc-300 sm:text-lg">
-              Centralizovan direktorijum studija i mobilnih detailera, spreman
-              da preraste u marketplace sa preuzimanjem profila, isticanjem i
-              online zakazivanjem.
-            </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link
-                href="/studiji"
-                className="inline-flex h-11 items-center gap-2 rounded-md bg-teal-500 px-5 text-sm font-semibold text-white transition hover:bg-teal-400"
-              >
-                Pretraži studije
-                <ArrowRight size={16} />
-              </Link>
-              <Link
-                href="/usluge/dubinsko-pranje"
-                className="inline-flex h-11 items-center gap-2 rounded-md border border-white/20 px-5 text-sm font-semibold text-white transition hover:bg-white/10"
-              >
-                Popularne usluge
-              </Link>
-            </div>
-          </div>
+      <section className="bg-[radial-gradient(circle_at_top,#ffffff_0%,#f4f4f5_44%,#d4d4d8_100%)] px-4 py-5 sm:px-6 sm:py-7 lg:px-8">
+        <div className="mx-auto max-w-7xl rounded-[2rem] bg-white p-3 shadow-[0_28px_80px_rgba(39,39,42,0.18)] sm:p-4 lg:rounded-[2.5rem]">
+          <div className="relative min-h-[500px] overflow-hidden rounded-[1.5rem] bg-zinc-950 text-white sm:min-h-[560px] lg:min-h-[600px] lg:rounded-[2rem]">
+            <Image
+              src={heroImage}
+              alt="Premium auto detailing studio"
+              fill
+              priority
+              sizes="(min-width: 1280px) 1216px, 100vw"
+              className="object-cover object-center"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-black/10 to-black/70" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_80%,rgba(14,165,233,0.18),transparent_30%),linear-gradient(90deg,rgba(0,0,0,0.56),transparent_54%)]" />
 
-          <div className="relative min-h-80 overflow-hidden rounded-lg border border-white/10 bg-zinc-900 p-6 shadow-2xl">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_20%,rgba(20,184,166,0.4),transparent_24%),linear-gradient(135deg,#18181b_0%,#27272a_55%,#e5e7eb_100%)]" />
-            <div className="absolute left-8 right-8 top-1/2 h-16 -translate-y-1/2 rounded-full border border-white/20 bg-white/10 shadow-2xl backdrop-blur-sm" />
-            <div className="absolute bottom-10 left-10 right-10 h-3 rounded-full bg-black/35 blur-md" />
-            <div className="relative z-10 grid h-full content-between gap-8">
-              <div className="flex justify-between gap-3">
-                <div className="rounded-lg bg-white/10 p-4 backdrop-blur">
-                  <p className="text-3xl font-semibold">{studios.length}</p>
-                  <p className="mt-1 text-sm text-zinc-300">profila</p>
-                </div>
-                <div className="rounded-lg bg-white/10 p-4 backdrop-blur">
-                  <p className="text-3xl font-semibold">{services.length}</p>
-                  <p className="mt-1 text-sm text-zinc-300">usluga</p>
-                </div>
+            <div className="relative z-10 flex min-h-[500px] flex-col justify-between p-6 sm:min-h-[560px] sm:p-10 lg:min-h-[600px] lg:p-14">
+              <div>
+                <p className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white backdrop-blur-md">
+                  <Sparkles size={16} />
+                  Auto detailing Srbija
+                </p>
+                <h1 className="mt-8 max-w-6xl text-5xl font-black leading-none text-white/55 sm:text-7xl lg:text-8xl">
+                  Svi Studiji
+                  <span className="block">Na Jednom Mestu</span>
+                </h1>
               </div>
-              <div className="rounded-lg bg-white p-5 text-zinc-950 shadow-xl">
-                <div className="flex items-center gap-3">
-                  <Search className="text-teal-600" size={22} />
-                  <div>
-                    <p className="font-semibold">MVP direktorijum</p>
-                    <p className="text-sm text-zinc-600">
-                      Filter po gradu, usluzi, tipu i nazivu studija.
-                    </p>
+
+              <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+                <div className="max-w-sm">
+                  <p className="text-base leading-7 text-white sm:text-lg">
+                    Pronađite najbolji detailing studio u vašem gradu. Svi na
+                    jednom mestu, brzo i jednostavno.
+                  </p>
+                  <div className="mt-7">
+                    <Link
+                      href="/studiji"
+                      className="inline-flex h-14 items-center justify-center rounded-full bg-white px-9 text-base font-semibold text-zinc-950 shadow-xl transition hover:bg-zinc-100"
+                    >
+                      Pronađi Studio
+                    </Link>
                   </div>
                 </div>
+
+                <Link
+                  href="/studiji"
+                  className="hidden w-64 rounded-2xl bg-white p-5 text-zinc-950 shadow-2xl transition hover:-translate-y-0.5 hover:shadow-[0_24px_70px_rgba(0,0,0,0.28)] md:block"
+                >
+                  <div className="flex items-start gap-3">
+                    <MapPin className="mt-1 text-sky-500" size={22} />
+                    <div>
+                      <p className="text-xl font-semibold leading-6">
+                        Pronađi Studio
+                      </p>
+                      <p className="mt-1 text-sm text-zinc-500">
+                        {studios.length} profila u bazi
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-10 flex items-center justify-between">
+                    <span className="text-sm font-semibold text-zinc-500">
+                      DetailingHub
+                    </span>
+                    <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-zinc-950 text-white">
+                      <ArrowRight size={17} />
+                    </span>
+                  </div>
+                </Link>
               </div>
             </div>
           </div>
@@ -94,7 +101,7 @@ export default async function Home() {
             <p className="text-sm font-semibold uppercase tracking-[0.14em] text-teal-700">
               Usluge
             </p>
-            <h2 className="mt-2 text-3xl font-semibold tracking-tight">
+            <h2 className="mt-2 text-3xl font-semibold">
               Najtraženije detailing usluge
             </h2>
           </div>
@@ -120,7 +127,7 @@ export default async function Home() {
               <p className="text-sm font-semibold uppercase tracking-[0.14em] text-teal-700">
                 Direktorijum
               </p>
-              <h2 className="mt-2 text-3xl font-semibold tracking-tight">
+              <h2 className="mt-2 text-3xl font-semibold">
                 Novi profili u bazi
               </h2>
             </div>
@@ -153,7 +160,10 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="mx-auto grid max-w-7xl gap-5 px-4 py-12 sm:px-6 md:grid-cols-2 lg:px-8">
+      <section
+        id="kako-radi"
+        className="mx-auto grid max-w-7xl gap-5 px-4 py-12 sm:px-6 md:grid-cols-2 lg:px-8"
+      >
         <div className="rounded-lg border border-zinc-200 bg-white p-6">
           <BadgeCheck className="text-teal-600" size={24} />
           <h2 className="mt-4 text-xl font-semibold">Za vlasnike vozila</h2>
@@ -162,7 +172,10 @@ export default async function Home() {
             pošaljite upit bez obilaska desetina profila.
           </p>
         </div>
-        <div className="rounded-lg border border-zinc-200 bg-white p-6">
+        <div
+          id="za-studije"
+          className="rounded-lg border border-zinc-200 bg-white p-6"
+        >
           <ShieldCheck className="text-amber-700" size={24} />
           <h2 className="mt-4 text-xl font-semibold">Za detailing studije</h2>
           <p className="mt-2 text-sm leading-6 text-zinc-600">
