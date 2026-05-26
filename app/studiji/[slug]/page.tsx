@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { Clock, MapPin, ShieldAlert } from "lucide-react";
+import { CheckCircle2, Clock, MapPin, ShieldAlert } from "lucide-react";
 import { ClaimProfileBox } from "@/components/public/ClaimProfileBox";
 import { ContactButtons } from "@/components/public/ContactButtons";
 import { InquiryForm } from "@/components/public/InquiryForm";
@@ -58,6 +58,20 @@ export default async function StudioPage({ params, searchParams }: Props) {
   }
 
   const studioJsonLd = buildStudioJsonLd(studio);
+  const isAcceptedProfile =
+    studio.status === "CLAIMED" || studio.status === "VERIFIED";
+  const isPendingProfile = studio.status === "PENDING_REVIEW";
+  const SourceNoteIcon = isAcceptedProfile ? CheckCircle2 : ShieldAlert;
+  const sourceNoteClassName = isAcceptedProfile
+    ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+    : isPendingProfile
+      ? "border-violet-200 bg-violet-50 text-violet-900"
+      : "border-amber-200 bg-amber-50 text-amber-900";
+  const sourceNoteIconClassName = isAcceptedProfile
+    ? "text-emerald-700"
+    : isPendingProfile
+      ? "text-violet-700"
+      : "text-amber-700";
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
@@ -125,10 +139,13 @@ export default async function StudioPage({ params, searchParams }: Props) {
               </p>
             ) : null}
 
-            <div className="mt-5 rounded-lg border border-amber-200 bg-amber-50 p-4">
+            <div className={`mt-5 rounded-lg border p-4 ${sourceNoteClassName}`}>
               <div className="flex gap-3">
-                <ShieldAlert className="mt-0.5 text-amber-700" size={19} />
-                <p className="text-sm leading-6 text-amber-900">
+                <SourceNoteIcon
+                  className={`mt-0.5 ${sourceNoteIconClassName}`}
+                  size={19}
+                />
+                <p className="text-sm leading-6">
                   {studio.sourceNote ||
                     "Ovaj profil je napravljen na osnovu javno dostupnih informacija. Vlasnik može da preuzme, izmeni ili ukloni profil."}
                 </p>
