@@ -72,6 +72,11 @@ async function requireOwnerAccount(ownerId: string) {
   return owner;
 }
 
+function revalidatePublicDirectory() {
+  revalidatePath("/");
+  revalidatePath("/studiji");
+}
+
 export async function loginAdminAction(formData: FormData) {
   const email = String(formData.get("email") ?? "");
   const password = String(formData.get("password") ?? "");
@@ -125,7 +130,7 @@ export async function createStudioAction(formData: FormData) {
     },
   });
 
-  revalidatePath("/studiji");
+  revalidatePublicDirectory();
   revalidatePath("/admin/studios");
   redirect(`/admin/studios/${studio.id}`);
 }
@@ -172,7 +177,7 @@ export async function updateStudioAction(formData: FormData) {
     });
   }
 
-  revalidatePath("/studiji");
+  revalidatePublicDirectory();
   revalidatePath(`/admin/studios/${id}`);
   redirect(`/admin/studios/${id}?saved=1`);
 }
@@ -182,13 +187,14 @@ export async function hideStudioAction(formData: FormData) {
   const id = String(formData.get("id") ?? "");
   requireDatabase("/admin/studios");
 
-  await prisma.detailingStudio.update({
+  const studio = await prisma.detailingStudio.update({
     where: { id },
     data: { status: "HIDDEN", isActive: false },
   });
 
-  revalidatePath("/studiji");
+  revalidatePublicDirectory();
   revalidatePath("/admin/studios");
+  revalidatePath(`/studiji/${studio.slug}`);
   redirect("/admin/studios?hidden=1");
 }
 
@@ -213,7 +219,7 @@ export async function createServiceAction(formData: FormData) {
   });
 
   revalidatePath("/admin/services");
-  revalidatePath("/studiji");
+  revalidatePublicDirectory();
   redirect("/admin/services?saved=1");
 }
 
@@ -234,7 +240,7 @@ export async function createCityAction(formData: FormData) {
   });
 
   revalidatePath("/admin/cities");
-  revalidatePath("/studiji");
+  revalidatePublicDirectory();
   redirect("/admin/cities?saved=1");
 }
 
@@ -332,6 +338,7 @@ export async function approveClaimAndCreateOwnerAction(formData: FormData) {
   revalidatePath("/admin/claims");
   revalidatePath("/admin/studios");
   revalidatePath(`/admin/studios/${claim.studioId}`);
+  revalidatePublicDirectory();
   revalidatePath(`/studiji/${claim.studio.slug}`);
   redirect("/admin/claims?approved=1");
 }
@@ -412,6 +419,7 @@ export async function unlinkOwnerStudioAction(formData: FormData) {
   revalidatePath("/admin/owners");
   revalidatePath("/admin/studios");
   revalidatePath(`/admin/studios/${data.studioId}`);
+  revalidatePublicDirectory();
   redirect("/admin/owners?unlinked=1");
 }
 
@@ -459,7 +467,7 @@ export async function approvePendingStudioAction(formData: FormData) {
 
   revalidatePath("/admin/studios");
   revalidatePath(`/admin/studios/${studio.id}`);
-  revalidatePath("/studiji");
+  revalidatePublicDirectory();
   revalidatePath(`/studiji/${studio.slug}`);
   redirect("/admin/studios?approved=1");
 }
@@ -483,5 +491,7 @@ export async function rejectPendingStudioAction(formData: FormData) {
 
   revalidatePath("/admin/studios");
   revalidatePath(`/admin/studios/${studio.id}`);
+  revalidatePublicDirectory();
+  revalidatePath(`/studiji/${studio.slug}`);
   redirect("/admin/studios?rejected=1");
 }

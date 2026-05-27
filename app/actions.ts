@@ -47,6 +47,7 @@ export async function submitStudioAction(formData: FormData) {
 
   if (result.status === "created" && result.ownerEmail) {
     await createOwnerSession(result.ownerEmail);
+    revalidatePath("/");
     revalidatePath("/admin/studios");
     redirect("/studio?submitted=1");
   }

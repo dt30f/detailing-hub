@@ -32,6 +32,11 @@ function toOptionalInt(value?: string) {
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
 }
 
+function revalidatePublicDirectory() {
+  revalidatePath("/");
+  revalidatePath("/studiji");
+}
+
 async function requireOwnedStudio(studioId: string, ownerId: string) {
   const studio = await prisma.detailingStudio.findFirst({
     where: { id: studioId, ownerId },
@@ -105,6 +110,7 @@ export async function updateOwnerStudioProfileAction(formData: FormData) {
 
   revalidatePath("/studio");
   revalidatePath("/studio/profil");
+  revalidatePublicDirectory();
   revalidatePath(`/studiji/${studio.slug}`);
   redirect(`/studio/profil?studioId=${data.studioId}&saved=1`);
 }
@@ -151,6 +157,7 @@ export async function updateOwnerStudioServicesAction(formData: FormData) {
 
   revalidatePath("/studio");
   revalidatePath("/studio/usluge");
+  revalidatePublicDirectory();
   revalidatePath(`/studiji/${studio.slug}`);
   redirect(`/studio/usluge?studioId=${data.studioId}&saved=1`);
 }
@@ -183,6 +190,7 @@ export async function addOwnerStudioImageAction(formData: FormData) {
 
   revalidatePath("/studio");
   revalidatePath("/studio/slike");
+  revalidatePublicDirectory();
   revalidatePath(`/studiji/${studio.slug}`);
   redirect(`/studio/slike?studioId=${data.studioId}&saved=1`);
 }
@@ -205,6 +213,7 @@ export async function deleteOwnerStudioImageAction(formData: FormData) {
 
   revalidatePath("/studio");
   revalidatePath("/studio/slike");
+  revalidatePublicDirectory();
   revalidatePath(`/studiji/${studio.slug}`);
   redirect(`/studio/slike?studioId=${studioId}&deleted=1`);
 }
