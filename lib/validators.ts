@@ -82,6 +82,11 @@ export const adminStudioIdSchema = z.object({
   studioId: z.string().min(1),
 });
 
+export const adminStudioImageSchema = z.object({
+  studioId: z.string().min(1),
+  imageId: z.string().min(1),
+});
+
 export const studioViewSchema = z.object({
   studioId: z.string().min(1),
   pathname: optionalString,
@@ -112,7 +117,6 @@ export const ownerStudioServicesSchema = z.object({
 
 export const ownerStudioImageSchema = z.object({
   studioId: z.string().min(1),
-  url: optionalUrl,
   alt: optionalString,
   type: z.enum(["GENERAL", "BEFORE_AFTER", "WORKSHOP", "EXTERIOR"]),
 });

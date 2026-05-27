@@ -16,6 +16,11 @@ import {
   ownerStudioServicesSchema,
 } from "@/lib/validators";
 import type { ImageType } from "@/lib/types";
+import {
+  deleteStudioImageFile,
+  uploadStudioImageFile,
+  validateStudioImageFile,
+} from "@/lib/supabase-storage";
 
 function requireDatabase(redirectTo: string) {
   if (!isDatabaseConfigured()) {
@@ -168,21 +173,34 @@ export async function addOwnerStudioImageAction(formData: FormData) {
 
   const data = ownerStudioImageSchema.parse({
     studioId: formData.get("studioId"),
-    url: formData.get("url"),
     alt: formData.get("alt"),
     type: formData.get("type") || "GENERAL",
   });
+  const image = formData.get("image");
+  const file = image instanceof File ? image : null;
+  const fileError = validateStudioImageFile(file);
 
-  if (!data.url) {
-    redirect(`/studio/slike?studioId=${data.studioId}&image=missing`);
+  if (fileError) {
+    redirect(`/studio/slike?studioId=${data.studioId}&image=${fileError}`);
   }
 
   const studio = await requireOwnedStudio(data.studioId, session.id);
+  let upload;
+
+  try {
+    upload = await uploadStudioImageFile({
+      file: file!,
+      studioId: data.studioId,
+    });
+  } catch (error) {
+    console.error("Studio image upload failed.", error);
+    redirect(`/studio/slike?studioId=${data.studioId}&image=storage`);
+  }
 
   await prisma.studioImage.create({
     data: {
       studioId: data.studioId,
-      url: data.url,
+      url: upload.publicUrl,
       alt: data.alt,
       type: data.type as ImageType,
     },
@@ -202,6 +220,13 @@ export async function deleteOwnerStudioImageAction(formData: FormData) {
   const studioId = String(formData.get("studioId") ?? "");
   const imageId = String(formData.get("imageId") ?? "");
   const studio = await requireOwnedStudio(studioId, session.id);
+  const image = await prisma.studioImage.findFirst({
+    where: {
+      id: imageId,
+      studioId,
+      studio: { ownerId: session.id },
+    },
+  });
 
   await prisma.studioImage.deleteMany({
     where: {
@@ -210,6 +235,10 @@ export async function deleteOwnerStudioImageAction(formData: FormData) {
       studio: { ownerId: session.id },
     },
   });
+
+  if (image?.url) {
+    await deleteStudioImageFile(image.url);
+  }
 
   revalidatePath("/studio");
   revalidatePath("/studio/slike");

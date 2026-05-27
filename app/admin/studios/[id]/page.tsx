@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { Trash2 } from "lucide-react";
 import { AdminNav } from "@/components/admin/AdminNav";
 import { DatabaseNotice } from "@/components/admin/DatabaseNotice";
 import { StudioForm } from "@/components/admin/StudioForm";
 import {
   approvePendingStudioAction,
+  deleteAdminStudioImageAction,
   hideStudioAction,
   rejectPendingStudioAction,
   updateStudioAction,
@@ -26,7 +28,11 @@ export default async function EditStudioPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ database?: string; saved?: string }>;
+  searchParams: Promise<{
+    database?: string;
+    imageDeleted?: string;
+    saved?: string;
+  }>;
 }) {
   const [{ id }, flags, session] = await Promise.all([
     params,
@@ -56,6 +62,11 @@ export default async function EditStudioPage({
         {flags.saved ? (
           <div className="mb-6 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm font-medium text-emerald-800">
             Profil je sačuvan.
+          </div>
+        ) : null}
+        {flags.imageDeleted ? (
+          <div className="mb-6 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm font-medium text-emerald-800">
+            Slika je uklonjena.
           </div>
         ) : null}
 
@@ -110,6 +121,52 @@ export default async function EditStudioPage({
             studio={studio}
           />
         </div>
+
+        <section className="mt-8 rounded-lg border border-zinc-200 bg-white p-5">
+          <h2 className="text-lg font-semibold text-zinc-950">
+            Slike profila
+          </h2>
+          <p className="mt-1 text-sm leading-6 text-zinc-600">
+            Admin može da ukloni neprikladnu ili netačnu sliku koju je owner
+            dodao.
+          </p>
+          {studio.images.length === 0 ? (
+            <p className="mt-4 text-sm text-zinc-600">
+              Ovaj profil još nema dodate slike.
+            </p>
+          ) : null}
+          <div className="mt-5 grid gap-4 md:grid-cols-2">
+            {studio.images.map((image) => (
+              <article
+                className="overflow-hidden rounded-lg border border-zinc-200"
+                key={image.id}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={image.url}
+                  alt={image.alt || studio.name}
+                  className="h-56 w-full object-cover"
+                />
+                <div className="p-4">
+                  <p className="text-sm font-semibold text-zinc-950">
+                    {image.alt || studio.name}
+                  </p>
+                  <p className="mt-1 text-xs font-medium text-zinc-500">
+                    {image.type}
+                  </p>
+                  <form action={deleteAdminStudioImageAction} className="mt-4">
+                    <input type="hidden" name="studioId" value={studio.id} />
+                    <input type="hidden" name="imageId" value={image.id} />
+                    <button className="inline-flex h-10 items-center gap-2 rounded-md border border-red-200 px-4 text-sm font-semibold text-red-700 transition hover:bg-red-50">
+                      <Trash2 size={16} />
+                      Ukloni sliku
+                    </button>
+                  </form>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
 
         <form action={hideStudioAction} className="mt-8 rounded-lg border border-red-200 bg-red-50 p-5">
           <input type="hidden" name="id" value={studio.id} />

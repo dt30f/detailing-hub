@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Trash2 } from "lucide-react";
+import { ImagePlus, Trash2 } from "lucide-react";
 import { OwnerNav } from "@/components/owner/OwnerNav";
 import { requireOwner } from "@/lib/auth";
 import { getOwnerStudioById } from "@/lib/data";
@@ -62,7 +62,25 @@ export default async function StudioImagesPage({
 
         {params.image === "missing" ? (
           <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800">
-            URL slike je obavezan.
+            Izaberite sliku za upload.
+          </div>
+        ) : null}
+
+        {params.image === "type" ? (
+          <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800">
+            Dozvoljeni formati su JPG, PNG i WebP.
+          </div>
+        ) : null}
+
+        {params.image === "size" ? (
+          <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800">
+            Slika može imati najviše 5 MB.
+          </div>
+        ) : null}
+
+        {params.image === "storage" ? (
+          <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800">
+            Upload nije uspeo. Proverite Supabase Storage podešavanja.
           </div>
         ) : null}
 
@@ -77,18 +95,23 @@ export default async function StudioImagesPage({
                 Dodaj sliku
               </h2>
               <p className="mt-1 text-sm leading-6 text-zinc-600">
-                U MVP verziji unosimo URL slike koju studio ima pravo da koristi.
-                Upload kroz Supabase Storage dodajemo kao sledeći korak.
+                Uploadujte JPG, PNG ili WebP sliku koju studio ima pravo da
+                koristi. Maksimalna veličina je 5 MB.
               </p>
-              <form action={addOwnerStudioImageAction} className="mt-5 space-y-4">
+              <form
+                action={addOwnerStudioImageAction}
+                encType="multipart/form-data"
+                className="mt-5 space-y-4"
+              >
                 <input type="hidden" name="studioId" value={studio.id} />
                 <label className="block space-y-1.5">
-                  <span className="text-sm font-medium">URL slike</span>
+                  <span className="text-sm font-medium">Slika</span>
                   <input
                     required
-                    name="url"
-                    placeholder="https://..."
-                    className="h-11 w-full rounded-md border border-zinc-200 px-3 text-sm outline-none focus:border-zinc-500"
+                    name="image"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="block w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm file:mr-4 file:rounded-md file:border-0 file:bg-zinc-950 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white"
                   />
                 </label>
                 <div className="grid gap-4 md:grid-cols-2">
@@ -114,8 +137,9 @@ export default async function StudioImagesPage({
                     </select>
                   </label>
                 </div>
-                <button className="h-11 rounded-md bg-zinc-950 px-5 text-sm font-semibold text-white transition hover:bg-zinc-800">
-                  Dodaj sliku
+                <button className="inline-flex h-11 items-center gap-2 rounded-md bg-zinc-950 px-5 text-sm font-semibold text-white transition hover:bg-zinc-800">
+                  <ImagePlus size={16} />
+                  Uploaduj sliku
                 </button>
               </form>
             </section>

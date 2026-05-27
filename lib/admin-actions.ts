@@ -9,6 +9,7 @@ import {
   adminOwnerPasswordSchema,
   adminOwnerStudioSchema,
   adminOwnerUpdateSchema,
+  adminStudioImageSchema,
   adminStudioIdSchema,
   approveClaimSchema,
   claimIdSchema,
@@ -24,6 +25,7 @@ import {
   verifyAdminCredentials,
 } from "@/lib/auth";
 import { slugify } from "@/lib/slug";
+import { deleteStudioImageFile } from "@/lib/supabase-storage";
 
 function getBoolean(formData: FormData, key: string) {
   return formData.get(key) === "on" || formData.get(key) === "true";
@@ -494,4 +496,36 @@ export async function rejectPendingStudioAction(formData: FormData) {
   revalidatePublicDirectory();
   revalidatePath(`/studiji/${studio.slug}`);
   redirect("/admin/studios?rejected=1");
+}
+
+export async function deleteAdminStudioImageAction(formData: FormData) {
+  await requireAdmin();
+  requireDatabase("/admin/studios");
+
+  const data = adminStudioImageSchema.parse({
+    studioId: formData.get("studioId"),
+    imageId: formData.get("imageId"),
+  });
+  const image = await prisma.studioImage.findFirst({
+    where: { id: data.imageId, studioId: data.studioId },
+    include: { studio: { select: { slug: true } } },
+  });
+
+  await prisma.studioImage.deleteMany({
+    where: { id: data.imageId, studioId: data.studioId },
+  });
+
+  if (image?.url) {
+    await deleteStudioImageFile(image.url);
+  }
+
+  revalidatePath("/admin/studios");
+  revalidatePath(`/admin/studios/${data.studioId}`);
+  revalidatePublicDirectory();
+
+  if (image?.studio.slug) {
+    revalidatePath(`/studiji/${image.studio.slug}`);
+  }
+
+  redirect(`/admin/studios/${data.studioId}?imageDeleted=1`);
 }
