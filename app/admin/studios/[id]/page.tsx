@@ -7,7 +7,6 @@ import { StudioForm } from "@/components/admin/StudioForm";
 import {
   approvePendingStudioAction,
   deleteAdminStudioImageAction,
-  hideStudioAction,
   rejectPendingStudioAction,
   updateStudioAction,
 } from "@/lib/admin-actions";
@@ -167,17 +166,6 @@ export default async function EditStudioPage({
             ))}
           </div>
         </section>
-
-        <form action={hideStudioAction} className="mt-8 rounded-lg border border-red-200 bg-red-50 p-5">
-          <input type="hidden" name="id" value={studio.id} />
-          <h2 className="font-semibold text-red-950">Sakrij profil</h2>
-          <p className="mt-2 text-sm leading-6 text-red-800">
-            Profil ostaje u bazi, ali više nije aktivan u javnom direktorijumu.
-          </p>
-          <button className="mt-4 h-10 rounded-md bg-red-700 px-4 text-sm font-semibold text-white transition hover:bg-red-800">
-            Sakrij profil
-          </button>
-        </form>
       </div>
     </div>
   );

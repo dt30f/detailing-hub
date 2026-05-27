@@ -187,22 +187,6 @@ export async function updateStudioAction(formData: FormData) {
   redirect(`/admin/studios/${id}?saved=1`);
 }
 
-export async function hideStudioAction(formData: FormData) {
-  await requireAdmin();
-  const id = String(formData.get("id") ?? "");
-  requireDatabase("/admin/studios");
-
-  const studio = await prisma.detailingStudio.update({
-    where: { id },
-    data: { status: "HIDDEN", isActive: false },
-  });
-
-  revalidatePublicDirectory();
-  revalidatePath("/admin/studios");
-  revalidatePath(`/studiji/${studio.slug}`);
-  redirect("/admin/studios?hidden=1");
-}
-
 export async function createServiceAction(formData: FormData) {
   await requireAdmin();
   requireDatabase("/admin/services");
