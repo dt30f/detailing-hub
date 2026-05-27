@@ -487,6 +487,47 @@ export async function rejectPendingStudioAction(formData: FormData) {
   redirect("/admin/studios?rejected=1");
 }
 
+export async function deleteStudioAction(formData: FormData) {
+  await requireAdmin();
+  requireDatabase("/admin/studios");
+
+  const data = adminStudioIdSchema.parse({
+    studioId: formData.get("studioId"),
+  });
+
+  const studio = await prisma.detailingStudio.findUnique({
+    where: { id: data.studioId },
+    select: {
+      slug: true,
+      images: { select: { url: true } },
+    },
+  });
+
+  if (!studio) {
+    redirect("/admin/studios?missing=1");
+  }
+
+  for (const image of studio.images) {
+    try {
+      await deleteStudioImageFile(image.url);
+    } catch (error) {
+      console.warn("Studio image file delete failed", error);
+    }
+  }
+
+  await prisma.$transaction([
+    prisma.subscription.deleteMany({ where: { studioId: data.studioId } }),
+    prisma.detailingStudio.delete({ where: { id: data.studioId } }),
+  ]);
+
+  revalidatePath("/admin/studios");
+  revalidatePath("/admin/owners");
+  revalidatePath("/admin/analytics");
+  revalidatePublicDirectory();
+  revalidatePath(`/studiji/${studio.slug}`);
+  redirect("/admin/studios?deleted=1");
+}
+
 export async function deleteAdminStudioImageAction(formData: FormData) {
   await requireAdmin();
   requireDatabase("/admin/studios");

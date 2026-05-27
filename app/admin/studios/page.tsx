@@ -3,9 +3,11 @@ import Link from "next/link";
 import { ArrowRight, Plus } from "lucide-react";
 import { AdminNav } from "@/components/admin/AdminNav";
 import { DatabaseNotice } from "@/components/admin/DatabaseNotice";
+import { DeleteStudioButton } from "@/components/admin/DeleteStudioButton";
 import { StatusBadge } from "@/components/public/StatusBadge";
 import {
   approvePendingStudioAction,
+  deleteStudioAction,
   rejectPendingStudioAction,
 } from "@/lib/admin-actions";
 import { getStudioViewSummaries, listStudios } from "@/lib/data";
@@ -21,6 +23,7 @@ export default async function AdminStudiosPage({
   searchParams: Promise<{
     approved?: string;
     database?: string;
+    deleted?: string;
     hidden?: string;
     rejected?: string;
   }>;
@@ -69,6 +72,12 @@ export default async function AdminStudiosPage({
           </div>
         ) : null}
 
+        {params.deleted ? (
+          <div className="mt-6 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm font-medium text-emerald-800">
+            Profil studija je trajno obrisan.
+          </div>
+        ) : null}
+
         {pendingStudios.length > 0 ? (
           <div className="mt-6 rounded-lg border border-violet-200 bg-violet-50 p-4 text-sm font-medium text-violet-900">
             {pendingStudios.length} prijavljenih profila čeka admin proveru.
@@ -113,6 +122,11 @@ export default async function AdminStudiosPage({
                     Uredi
                     <ArrowRight size={15} />
                   </Link>
+                  <DeleteStudioButton
+                    action={deleteStudioAction}
+                    studioId={studio.id}
+                    studioName={studio.name}
+                  />
                   {studio.status === "PENDING_REVIEW" ? (
                     <>
                       <form action={approvePendingStudioAction}>
