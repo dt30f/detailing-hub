@@ -316,6 +316,10 @@ export async function approveClaimAndCreateOwnerAction(formData: FormData) {
         ownerId: owner.id,
         status: claim.studio.status === "VERIFIED" ? "VERIFIED" : "CLAIMED",
         isActive: true,
+        sourceNote:
+          claim.studio.status === "VERIFIED"
+            ? "Profil je verifikovan i podaci su potvrđeni."
+            : "Profil je preuzeo vlasnik i podaci su ažurirani iz studio panela.",
       },
     });
 
@@ -404,6 +408,8 @@ export async function unlinkOwnerStudioAction(formData: FormData) {
       ownerId: null,
       status: "UNCLAIMED",
       isActive: true,
+      sourceNote:
+        "Profil je napravljen na osnovu javno dostupnih informacija.",
     },
   });
 

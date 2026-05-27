@@ -72,6 +72,14 @@ export default async function StudioPage({ params, searchParams }: Props) {
     : isPendingProfile
       ? "text-violet-700"
       : "text-amber-700";
+  const sourceNoteText = isAcceptedProfile
+    ? studio.status === "VERIFIED"
+      ? "Profil je verifikovan i podaci su potvrđeni."
+      : "Profil je preuzeo vlasnik i podaci su ažurirani iz studio panela."
+    : isPendingProfile
+      ? "Profil je poslao vlasnik i čeka admin proveru."
+      : studio.sourceNote ||
+        "Ovaj profil je napravljen na osnovu javno dostupnih informacija. Vlasnik može da preuzme, izmeni ili ukloni profil.";
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
@@ -146,7 +154,7 @@ export default async function StudioPage({ params, searchParams }: Props) {
                   size={19}
                 />
                 <p className="text-sm leading-6">
-                  {studio.sourceNote ||
+                  {sourceNoteText ||
                     "Ovaj profil je napravljen na osnovu javno dostupnih informacija. Vlasnik može da preuzme, izmeni ili ukloni profil."}
                 </p>
               </div>
