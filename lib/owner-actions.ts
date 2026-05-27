@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { compare, hash } from "bcryptjs";
 import { prisma, isDatabaseConfigured } from "@/lib/prisma";
 import {
   clearOwnerSession,
@@ -11,6 +12,7 @@ import {
 } from "@/lib/auth";
 import {
   ownerLoginSchema,
+  ownerPasswordChangeSchema,
   ownerStudioImageSchema,
   ownerStudioProfileSchema,
   ownerStudioServicesSchema,
@@ -75,6 +77,51 @@ export async function loginOwnerAction(formData: FormData) {
 export async function logoutOwnerAction() {
   await clearOwnerSession();
   redirect("/studio/login");
+}
+
+export async function updateOwnerPasswordAction(formData: FormData) {
+  const session = await requireOwner();
+  requireDatabase("/studio/nalog");
+
+  const parsed = ownerPasswordChangeSchema.safeParse({
+    currentPassword: formData.get("currentPassword"),
+    newPassword: formData.get("newPassword"),
+    confirmPassword: formData.get("confirmPassword"),
+  });
+
+  if (!parsed.success) {
+    redirect("/studio/nalog?error=invalid");
+  }
+
+  const owner = await prisma.user.findFirst({
+    where: { id: session.id, role: "OWNER" },
+    select: { id: true, passwordHash: true },
+  });
+
+  if (!owner) {
+    redirect("/studio/login");
+  }
+
+  const currentPasswordValid = await compare(
+    parsed.data.currentPassword,
+    owner.passwordHash,
+  );
+
+  if (!currentPasswordValid) {
+    redirect("/studio/nalog?error=current");
+  }
+
+  if (parsed.data.currentPassword === parsed.data.newPassword) {
+    redirect("/studio/nalog?error=same");
+  }
+
+  await prisma.user.update({
+    where: { id: owner.id },
+    data: { passwordHash: await hash(parsed.data.newPassword, 10) },
+  });
+
+  revalidatePath("/studio/nalog");
+  redirect("/studio/nalog?saved=1");
 }
 
 export async function updateOwnerStudioProfileAction(formData: FormData) {

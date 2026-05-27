@@ -7,6 +7,7 @@ const links = [
   { href: "/studio/profil", label: "Profil" },
   { href: "/studio/usluge", label: "Usluge i cene" },
   { href: "/studio/slike", label: "Slike" },
+  { href: "/studio/nalog", label: "Nalog" },
 ];
 
 export function OwnerNav({ email }: { email: string }) {

@@ -49,6 +49,17 @@ export const ownerLoginSchema = z.object({
   password: z.string().min(8, "Lozinka mora imati bar 8 karaktera"),
 });
 
+export const ownerPasswordChangeSchema = z
+  .object({
+    currentPassword: z.string().min(1, "Trenutna lozinka je obavezna"),
+    newPassword: z.string().min(8, "Nova lozinka mora imati bar 8 karaktera"),
+    confirmPassword: z.string().min(8, "Potvrdite novu lozinku"),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Nove lozinke se ne poklapaju",
+    path: ["confirmPassword"],
+  });
+
 export const approveClaimSchema = z.object({
   claimId: z.string().min(1),
   password: optionalString,
