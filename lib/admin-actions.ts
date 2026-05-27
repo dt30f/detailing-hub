@@ -31,6 +31,10 @@ function getBoolean(formData: FormData, key: string) {
   return formData.get(key) === "on" || formData.get(key) === "true";
 }
 
+function isPublicStudioStatus(status: string) {
+  return status === "UNCLAIMED" || status === "CLAIMED" || status === "VERIFIED";
+}
+
 function studioPayload(formData: FormData) {
   return studioFormSchema.parse({
     name: formData.get("name"),
@@ -50,7 +54,6 @@ function studioPayload(formData: FormData) {
     sourceNote: formData.get("sourceNote"),
     isFeatured: getBoolean(formData, "isFeatured"),
     isPremium: getBoolean(formData, "isPremium"),
-    isActive: getBoolean(formData, "isActive"),
     serviceIds: formData.getAll("serviceIds").map(String),
   });
 }
@@ -125,7 +128,7 @@ export async function createStudioAction(formData: FormData) {
         "Profil je napravljen na osnovu javno dostupnih informacija.",
       isFeatured: data.isFeatured,
       isPremium: data.isPremium,
-      isActive: data.isActive,
+      isActive: isPublicStudioStatus(data.status),
       services: {
         create: data.serviceIds.map((serviceId) => ({ serviceId })),
       },
@@ -167,7 +170,7 @@ export async function updateStudioAction(formData: FormData) {
         sourceNote: data.sourceNote,
         isFeatured: data.isFeatured,
         isPremium: data.isPremium,
-        isActive: data.isActive,
+        isActive: isPublicStudioStatus(data.status),
       },
     }),
   ]);
@@ -328,6 +331,7 @@ export async function approveClaimAndCreateOwnerAction(formData: FormData) {
       data: {
         ownerId: owner.id,
         status: claim.studio.status === "VERIFIED" ? "VERIFIED" : "CLAIMED",
+        isActive: true,
       },
     });
 
@@ -415,6 +419,7 @@ export async function unlinkOwnerStudioAction(formData: FormData) {
     data: {
       ownerId: null,
       status: "UNCLAIMED",
+      isActive: true,
     },
   });
 

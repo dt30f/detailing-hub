@@ -11,9 +11,9 @@ const databaseUrl =
   "postgresql://johndoe:randompassword@localhost:5432/mydb?schema=public";
 
 function getPoolMax() {
-  const value = Number.parseInt(process.env.DATABASE_POOL_MAX || "3", 10);
+  const value = Number.parseInt(process.env.DATABASE_POOL_MAX || "1", 10);
 
-  return Number.isFinite(value) && value > 0 ? value : 3;
+  return Number.isFinite(value) && value > 0 ? value : 1;
 }
 
 function createPrismaClient() {

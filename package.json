@@ -16,6 +16,7 @@
     "db:seed": "prisma db seed",
     "db:import-real": "tsx prisma/import-real-studios.ts",
     "db:hide-demo": "tsx prisma/hide-demo-studios.ts",
+    "db:sync-visibility": "tsx -r dotenv/config prisma/sync-studio-visibility.ts",
     "db:studio": "prisma studio"
   },
   "dependencies": {

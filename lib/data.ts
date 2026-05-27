@@ -56,6 +56,12 @@ export type OwnerStudioSummary = {
   newInquiries: number;
 };
 
+const PUBLIC_STUDIO_STATUSES: StudioStatus[] = [
+  "UNCLAIMED",
+  "CLAIMED",
+  "VERIFIED",
+];
+
 type StudioRecord = Omit<PublicStudio, "services" | "images"> & {
   services?: PublicStudioService[];
   images?: PublicStudioImage[];
@@ -235,7 +241,7 @@ export const listStudios = cache(
 
       if (!filters.includeHidden) {
         where.isActive = true;
-        where.status = { not: "HIDDEN" };
+        where.status = { in: PUBLIC_STUDIO_STATUSES };
       }
 
       if (filters.city) {
@@ -556,13 +562,16 @@ export const getStudioBySlug = cache(
   async (slug: string): Promise<PublicStudio | null> => {
     const fallback = shouldUseSampleStudioFallback()
       ? sampleStudios.find(
-          (studio) => studio.slug === slug && studio.status !== "HIDDEN",
+          (studio) =>
+            studio.slug === slug &&
+            PUBLIC_STUDIO_STATUSES.includes(studio.status) &&
+            studio.isActive,
         ) ?? null
       : null;
 
     return withFallback(async () => {
       const studio = await prisma.detailingStudio.findFirst({
-        where: { slug, status: { not: "HIDDEN" }, isActive: true },
+        where: { slug, status: { in: PUBLIC_STUDIO_STATUSES }, isActive: true },
         include: studioInclude,
       });
 

@@ -6,6 +6,8 @@ import { ServiceBadge } from "@/components/public/ServiceBadge";
 import { StudioCard } from "@/components/public/StudioCard";
 import { getCities, getServices, listStudios } from "@/lib/data";
 
+export const dynamic = "force-dynamic";
+
 export default async function Home() {
   const [cities, services, studios] = await Promise.all([
     getCities(),

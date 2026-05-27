@@ -165,7 +165,6 @@ export const studioFormSchema = z.object({
   sourceNote: optionalString,
   isFeatured: z.boolean(),
   isPremium: z.boolean(),
-  isActive: z.boolean(),
   serviceIds: z.array(z.string()),
 });
 

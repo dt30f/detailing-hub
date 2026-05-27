@@ -34,7 +34,6 @@ export function StudioForm({ action, cities, services, studio }: StudioFormProps
   const flags = [
     { name: "isFeatured", label: "Featured", checked: studio?.isFeatured ?? false },
     { name: "isPremium", label: "Premium", checked: studio?.isPremium ?? false },
-    { name: "isActive", label: "Aktivan", checked: studio?.isActive ?? true },
   ];
 
   return (
