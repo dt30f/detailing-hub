@@ -23,6 +23,10 @@ function formatPrice(from?: number | null, to?: number | null) {
 
   const formatter = new Intl.NumberFormat("sr-RS");
 
+  if (from && to && from === to) {
+    return `${formatter.format(from)} RSD`;
+  }
+
   if (from && to) {
     return `${formatter.format(from)} - ${formatter.format(to)} RSD`;
   }

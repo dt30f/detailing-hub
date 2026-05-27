@@ -106,26 +106,33 @@ export function buildStudioJsonLd(studio: PublicStudio) {
           "@type": "City",
           name: studio.city.name,
         },
-        makesOffer: studio.services.map((item) => ({
-          "@type": "Offer",
-          name: item.service.name,
-          priceCurrency: item.priceFrom || item.priceTo ? "RSD" : undefined,
-          priceSpecification:
-            item.priceFrom || item.priceTo
-              ? {
-                  "@type": "PriceSpecification",
-                  minPrice: item.priceFrom,
-                  maxPrice: item.priceTo,
-                  priceCurrency: "RSD",
-                }
-              : undefined,
-          itemOffered: {
-            "@type": "Service",
+        makesOffer: studio.services.map((item) => {
+          const hasExactPrice =
+            item.priceFrom && item.priceTo && item.priceFrom === item.priceTo;
+
+          return {
+            "@type": "Offer",
             name: item.service.name,
-            serviceType: item.service.category,
-            description: item.service.description,
-          },
-        })),
+            priceCurrency: item.priceFrom || item.priceTo ? "RSD" : undefined,
+            price: hasExactPrice ? item.priceFrom : undefined,
+            priceSpecification:
+              item.priceFrom || item.priceTo
+                ? {
+                    "@type": "PriceSpecification",
+                    minPrice: hasExactPrice ? undefined : item.priceFrom,
+                    maxPrice: hasExactPrice ? undefined : item.priceTo,
+                    price: hasExactPrice ? item.priceFrom : undefined,
+                    priceCurrency: "RSD",
+                  }
+                : undefined,
+            itemOffered: {
+              "@type": "Service",
+              name: item.service.name,
+              serviceType: item.service.category,
+              description: item.service.description,
+            },
+          };
+        }),
         additionalProperty: [
           {
             "@type": "PropertyValue",
