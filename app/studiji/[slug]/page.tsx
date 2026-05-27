@@ -129,7 +129,7 @@ export default async function StudioPage({ params, searchParams }: Props) {
 
       <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr]">
         <div className="space-y-5">
-          <StudioVisual studio={studio} />
+          <StudioVisual studio={studio} enableGallery />
           <div className="rounded-lg border border-zinc-200 bg-white p-5">
             <h2 className="text-lg font-semibold">Kontakt</h2>
             <div className="mt-4">
