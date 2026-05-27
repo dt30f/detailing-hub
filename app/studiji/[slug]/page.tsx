@@ -34,6 +34,25 @@ function formatPrice(from?: number | null, to?: number | null) {
   return `Od ${formatter.format(from || to || 0)} RSD`;
 }
 
+function formatDuration(minutes?: number | null) {
+  if (!minutes || minutes <= 0) {
+    return null;
+  }
+
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+
+  if (hours === 0) {
+    return `${remainingMinutes}min`;
+  }
+
+  if (remainingMinutes === 0) {
+    return `${hours}h`;
+  }
+
+  return `${hours}h ${remainingMinutes}min`;
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const studio = await getStudioBySlug(slug);
@@ -189,7 +208,7 @@ export default async function StudioPage({ params, searchParams }: Props) {
                   {item.durationMin ? (
                     <p className="mt-3 flex items-center gap-2 text-xs text-zinc-500">
                       <Clock size={14} />
-                      Oko {Math.round(item.durationMin / 60)}h
+                      Oko {formatDuration(item.durationMin)}
                     </p>
                   ) : null}
                 </div>
